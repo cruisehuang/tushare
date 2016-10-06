@@ -597,6 +597,8 @@ def get_hists(symbols, start=None, end=None,
     """
     批量获取历史行情数据，具体参数和返回数据类型请参考get_hist_data接口
     """
+    print(du.get_now()+' 批量获取历史行情数据')
+    ct._write_head()
     df = pd.DataFrame()
     if isinstance(symbols, list) or isinstance(symbols, set) or isinstance(symbols, tuple) or isinstance(symbols, pd.Series):
         for symbol in symbols:
@@ -605,6 +607,9 @@ def get_hists(symbols, start=None, end=None,
                                  pause=pause)
             data['code'] = symbol
             df = df.append(data, ignore_index=True)
+            ct._write_console()
+            print(symbol)
+        print(du.get_now()+' 批量获取历史行情数据END')
         return df
     else:
         return None
@@ -628,3 +633,40 @@ def _code_to_symbol(code):
             return ''
         else:
             return 'sh%s'%code if code[:1] in ['5', '6', '9'] else 'sz%s'%code
+
+# Add by Cruise Huang
+def get_all_his_2_csv():
+    stockCodes = get_today_all()
+    print('Getting more info: ')
+    codes = stockCodes['code']
+    date = du.last_tddate()
+    df = get_hists(codes,date,date)
+  
+    df.to_csv('~/home/investment/stocks.csv')
+    print('get_all_his_2_csv end!')
+    return df
+
+def calc_vol_rate(rate = 2.0):
+    loaded = pd.read_csv('~/home/investment/stocks.csv', dtype='str')
+    
+    v5 = dict();
+    for i in range(len(loaded)):
+        code = loaded.ix[i]['code']
+        vol = float(loaded.ix[i]['v_ma5'])
+        v5[code] = vol 
+
+    current = get_today_all()
+    select = []
+    for j in range(len(current)):
+        key = str(current.ix[j]['code'])
+        if(key is None):
+            continue
+        try:
+            if ( (float(current.ix[j]['volume']) / v5[key] / 100 ) > rate):
+                select.append(key)
+        except KeyError as e:
+            print('Code not found:' + key)
+            continue
+
+    pd.DataFrame(select, dtype='str').to_csv('~/home/investment/select.csv')
+    return select

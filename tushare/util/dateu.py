@@ -85,21 +85,18 @@ def is_holiday(date):
     df = trade_cal()
     holiday = df[df.isOpen == 0]['calendarDate'].values
     if isinstance(date, str):
-        today = datetime.datetime.strptime(date, '%Y-%m-%d')
-
-    if today.isoweekday() in [6, 7] or date in holiday:
+        today = datetime.datetime.strptime(date, '%Y/%m/%d')
+    if today.isoweekday() in [6, 7] or date.replace('/0','/') in holiday:
         return True
     else:
         return False
 
 
 def last_tddate():
-    today = datetime.datetime.today().date()
-    today=int(today.strftime("%w"))
-    if today == 0:
-        return day_last_week(-2)
-    else:
-        return day_last_week(-1)
+    now = datetime.datetime.today().date()
+    while is_holiday(now.strftime('%Y/%m/%d')):
+        now = now + datetime.timedelta(-1)
+    return str(now)
         
 
     

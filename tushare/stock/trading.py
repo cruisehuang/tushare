@@ -105,7 +105,6 @@ def _parsing_dayprice_json(pageNum=1):
      -------
         DataFrame 当日所有股票交易数据(DataFrame)
     """
-    ct._write_console()
     request = Request(ct.SINA_DAY_PRICE_URL%(ct.P_TYPE['http'], ct.DOMAINS['vsf'],
                                  ct.PAGES['jv'], pageNum))
     text = urlopen(request, timeout=10).read()
@@ -290,11 +289,14 @@ def get_today_all():
            属性：代码，名称，涨跌幅，现价，开盘价，最高价，最低价，最日收盘价，成交量，换手率，成交额，市盈率，市净率，总市值，流通市值
     """
     ct._write_head()
-    df = _parsing_dayprice_json(1)
+    print(du.get_now()+' 获取当日全部数据')
+    df = pd.DataFrame()
     if df is not None:
-        for i in range(2, ct.PAGE_NUM[0]):
+        for i in range(1, ct.PAGE_NUM[0]):
             newdf = _parsing_dayprice_json(i)
             df = df.append(newdf, ignore_index=True)
+            ct._write_percentage((i+1) / ct.PAGE_NUM[0])
+    print('\n'+du.get_now()+' 获取当日全部数据结束')
     return df
 
 
@@ -597,19 +599,22 @@ def get_hists(symbols, start=None, end=None,
     """
     批量获取历史行情数据，具体参数和返回数据类型请参考get_hist_data接口
     """
-    print(du.get_now()+' 批量获取历史行情数据')
     ct._write_head()
+    print(du.get_now()+' 批量获取历史行情数据')
     df = pd.DataFrame()
     if isinstance(symbols, list) or isinstance(symbols, set) or isinstance(symbols, tuple) or isinstance(symbols, pd.Series):
+        count = 0
+        total = len(symbols)
         for symbol in symbols:
             data = get_hist_data(symbol, start=start, end=end,
                                  ktype=ktype, retry_count=retry_count,
                                  pause=pause)
             data['code'] = symbol
             df = df.append(data, ignore_index=True)
-            ct._write_console()
-            print(symbol)
-        print(du.get_now()+' 批量获取历史行情数据END')
+
+            count=count + 1
+            ct._write_percentage(count / total)
+        print('\n'+du.get_now()+' 批量获取历史行情数据结束')
         return df
     else:
         return None
@@ -637,7 +642,7 @@ def _code_to_symbol(code):
 # Add by Cruise Huang
 def get_all_his_2_csv():
     stockCodes = get_today_all()
-    print('Getting more info: ')
+    stockCodes.to_csv('~/home/investment/codes.csv')
     codes = stockCodes['code']
     date = du.last_tddate()
     df = get_hists(codes,date,date)

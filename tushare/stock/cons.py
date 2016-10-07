@@ -144,6 +144,12 @@ def _write_tips(tip):
 def _write_msg(msg):
     sys.stdout.write(msg)
     sys.stdout.flush()
+
+def _write_percentage(percent):
+    sys.stdout.write('\r')
+    percentString = "Progress: %.2f%%" % (percent * 100)
+    sys.stdout.write(percentString)
+    sys.stdout.flush()
     
 def _check_input(year, quarter):
     if isinstance(year, str) or year < 1989 :

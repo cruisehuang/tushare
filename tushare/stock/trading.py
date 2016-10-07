@@ -18,6 +18,11 @@ from tushare.stock import cons as ct
 import re
 from pandas.compat import StringIO
 from tushare.util import dateu as du
+
+#Begin by Cruise Huang
+from functools import partial
+from multiprocessing.pool import Pool
+#End by Cruise Huang
 try:
     from urllib.request import urlopen, Request
 except ImportError:
@@ -48,6 +53,7 @@ def get_hist_data(code=None, start=None, end=None,
       DataFrame
           属性:日期 ，开盘价， 最高价， 收盘价， 最低价， 成交量， 价格变动 ，涨跌幅，5日均价，10日均价，20日均价，5日均量，10日均量，20日均量，换手率
     """
+    print(code)
     symbol = _code_to_symbol(code)
     url = ''
     if ktype.upper() in ct.K_LABELS:
@@ -91,6 +97,9 @@ def get_hist_data(code=None, start=None, end=None,
                 df = df.drop('turnover', axis=1)
             df = df.set_index('date')
             df = df.sort_index(ascending = False)
+            #added by Cruise
+            if(start == end):
+                df['code'] = code
             return df
     raise IOError(ct.NETWORK_URL_ERROR_MSG)
 
@@ -296,6 +305,19 @@ def get_today_all():
             newdf = _parsing_dayprice_json(i)
             df = df.append(newdf, ignore_index=True)
             ct._write_percentage((i+1) / ct.PAGE_NUM[0])
+    print('\n'+du.get_now()+' 获取当日全部数据结束')
+    return df
+
+def get_today_all_multi():
+    ct._write_head()
+    print(du.get_now()+' 获取当日全部数据')
+    multiFunc = partial(_parsing_dayprice_json)
+    results = Pool(4).map(multiFunc, range(1,ct.PAGE_NUM[0]))
+
+    df = pd.DataFrame()
+    for result in results:
+        df=df.append(result, ignore_index=True);
+
     print('\n'+du.get_now()+' 获取当日全部数据结束')
     return df
 
@@ -601,8 +623,8 @@ def get_hists(symbols, start=None, end=None,
     """
     ct._write_head()
     print(du.get_now()+' 批量获取历史行情数据')
-    df = pd.DataFrame()
     if isinstance(symbols, list) or isinstance(symbols, set) or isinstance(symbols, tuple) or isinstance(symbols, pd.Series):
+        df = pd.DataFrame()
         count = 0
         total = len(symbols)
         for symbol in symbols:
@@ -618,6 +640,30 @@ def get_hists(symbols, start=None, end=None,
         return df
     else:
         return None
+
+def get_hists_multi(symbols, start=None, end=None,
+                    ktype='D', retry_count=3,
+                    pause=0.001):
+    """
+    批量获取历史行情数据，具体参数和返回数据类型请参考get_hist_data接口
+    """
+    ct._write_head()
+    print(du.get_now()+' 批量获取历史行情数据')
+    if isinstance(symbols, list) or isinstance(symbols, set) or isinstance(symbols, tuple) or isinstance(symbols, pd.Series):
+        multiFunc = partial(get_hist_data,start=start, end=end,
+                                          ktype=ktype, retry_count=retry_count,
+                                          pause=pause)
+        results = Pool(4).map(multiFunc, symbols)
+
+        df = pd.DataFrame()
+        for result in results:
+            df=df.append(result, ignore_index=True);
+
+        print('\n'+du.get_now()+' 批量获取历史行情数据结束')
+        return df
+    else:
+        return None
+
     
     
 def _random(n=13):
@@ -641,15 +687,17 @@ def _code_to_symbol(code):
 
 # Add by Cruise Huang
 def get_all_his_2_csv():
-    stockCodes = get_today_all()
+    stockCodes = get_today_all_multi()
     stockCodes.to_csv('~/home/investment/codes.csv')
     codes = stockCodes['code']
     date = du.last_tddate()
-    df = get_hists(codes,date,date)
+    df = get_hists_multi(codes,date,date)
   
     df.to_csv('~/home/investment/stocks.csv')
     print('get_all_his_2_csv end!')
     return df
+
+
 
 def calc_vol_rate(rate = 2.0):
     loaded = pd.read_csv('~/home/investment/stocks.csv', dtype='str')
@@ -660,7 +708,7 @@ def calc_vol_rate(rate = 2.0):
         vol = float(loaded.ix[i]['v_ma5'])
         v5[code] = vol 
 
-    current = get_today_all()
+    current = get_today_all_multi()
     select = []
     for j in range(len(current)):
         key = str(current.ix[j]['code'])

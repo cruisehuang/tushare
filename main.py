@@ -6,8 +6,8 @@ Created on 2016/10/07
 import tushare.stock.trading as td
 
 def main():
-    td.get_all_his_2_csv();
-
+    td.calc_vol_rate();
+  
  
 if __name__ == '__main__':
     main()

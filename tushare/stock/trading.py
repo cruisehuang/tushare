@@ -61,7 +61,7 @@ def get_hist_data(code=None, start=None, end=None,
                                     symbol, ktype)
     else:
         raise TypeError('ktype input error.')
-    
+
     for _ in range(retry_count):
         time.sleep(pause)
         try:
@@ -95,8 +95,7 @@ def get_hist_data(code=None, start=None, end=None,
             df = df.set_index('date')
             df = df.sort_index(ascending = False)
             #added by Cruise
-            if(start == end):
-                df['code'] = code
+            df.insert(loc=0,column='code',value=code)
             return df
     raise IOError(ct.NETWORK_URL_ERROR_MSG)
 

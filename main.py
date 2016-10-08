@@ -31,7 +31,7 @@ def get_today_all_multi():
     print('\n'+du.get_now()+' 获取当日全部数据结束')
     return df
 
-def get_hists_multi(symbols, start=None, end=None,
+def get_hists_multi(symbols, write2disk=False, start=None, end=None,
                     ktype='D', retry_count=3,
                     pause=0.001):
     """
@@ -51,19 +51,45 @@ def get_hists_multi(symbols, start=None, end=None,
         df = pd.DataFrame()
         for result in results:
             df=df.append(result, ignore_index=True);
+            if(write2disk == True):
+                result.to_csv(ct.CSV_DIR+'historyData/'+result.ix[0]['code']+'.csv')
 
         print('\n'+du.get_now()+' 批量获取历史行情数据结束')
         return df
     else:
         return None
 
-def get_all_his_2_csv():
+def get_tick_multi(symbols=None, date=None):
+    ct._write_head()
+    print(du.get_now()+' 批量获取分笔数据')
+    if (isinstance(symbols, list) or isinstance(symbols, set) or
+       isinstance(symbols, tuple) or isinstance(symbols, pd.Series)):
+        if(date is None):
+            multiFunc = partial(td.get_today_ticks,
+                                retry_count=retry_count, pause=pause)
+        else:
+            multiFunc = partial(td.get_tick_data,
+                                date=date, retry_count=retry_count, pause=pause)
+        p = Pool(16)
+        results = p.map(multiFunc, symbols)
+    
+
+
+def write_stockcodes():
     stockCodes = get_today_all_multi()
+    stockCodes.to_csv(ct.CSV_DIR+'all_today.csv')
     stockCodes.to_csv(ct.CSV_DIR+'codes.csv', columns=['code','name'])
 
-    codes = stockCodes['code']
+def write_all_his():
+    loaded = pd.read_csv(ct.CSV_DIR+'codes.csv', dtype='str',encoding='gbk')
+    get_hists_multi(loaded['code'], write2disk=True)
+
+def get_all_lastday():
+    loaded = pd.read_csv(ct.CSV_DIR+'codes.csv', dtype='str',encoding='gbk')
+    codes = loaded['code']
     date = du.last_tddate()
-    df = get_hists_multi(codes,date,date)
+
+    df = get_hists_multi(codes, start=date, end=date)
   
     df.to_csv(ct.CSV_DIR+'stocks_his_lastday.csv')
     df.to_csv(ct.CSV_DIR+'stocks_v5_lastday.csv', columns=['code','v_ma5'])
@@ -84,17 +110,25 @@ def calc_vol_rate(rate = 2.0):
         if(key is None):
             continue
         try:
-            if ( (float(current.ix[j]['volume']) / v5[key] / 100 ) > rate):
-                select.append(key)
+            row = current.ix[j]
+            #The first minute
+            if ( (float(row['volume']) * 60 * 4 / v5[key] / 100 ) > rate
+                 and row['changepercent'] > 2.0
+                 and row['trade'] > 0.0 and (row['nmc'] / row['trade']) <= 30000):
+                ct._write_msg(key + '\t')
+                data = {'code':key,
+                        'name':row['name'],
+                        'cp':row['changepercent'],
+                        'price':row['trade']}
+                select.append(data)
         except KeyError as e:
-            print('Code not found:' + key)
             continue
 
     pd.DataFrame(select, dtype='str').to_csv(ct.CSV_DIR+'select_by_vol_rate.csv')
     return select
 
 def main():
-    get_all_his_2_csv();
+    calc_vol_rate();
   
  
 if __name__ == '__main__':

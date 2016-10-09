@@ -3,6 +3,7 @@
 Created on 2016/10/07
 @author: Cruise Huang
 '''
+from datetime import datetime,date,time
 from functools import partial
 from multiprocessing import Value,Lock
 from multiprocessing.pool import Pool
@@ -19,10 +20,10 @@ def get_today_all_multi():
     print(du.get_now()+' 获取当日全部数据')
 
     multiFunc = partial(td._parsing_dayprice_json)
-    p = Pool(8)
-    results = p.map(multiFunc, range(1,ct.PAGE_NUM[0]))
-#    p.close()
-#    p.join()
+    with Pool(8) as p:
+        results = p.map(multiFunc, range(1,ct.PAGE_NUM[0]))
+        p.close()
+        p.join()
 
     df = pd.DataFrame()
     for result in results:
@@ -30,6 +31,11 @@ def get_today_all_multi():
 
     print('\n'+du.get_now()+' 获取当日全部数据结束')
     return df
+
+def write_his(result):
+    path = ct.CSV_DIR+'historyData/'+result.ix[0]['code']+'.csv'
+    ct._write_msg('\rWriting to:' + path)
+    result.to_csv(path)
 
 def get_hists_multi(symbols, write2disk=False, start=None, end=None,
                     ktype='D', retry_count=3,
@@ -43,16 +49,24 @@ def get_hists_multi(symbols, write2disk=False, start=None, end=None,
         multiFunc = partial(td.get_hist_data,start=start, end=end,
                                              ktype=ktype, retry_count=retry_count,
                                              pause=pause)
-        p = Pool(16)
-        results = p.map(multiFunc, symbols)
-#        p.close()
-#        p.join()
+        with Pool(16) as p:
+            results = p.map(multiFunc, symbols)
+            p.close()
+            p.join()
 
         df = pd.DataFrame()
         for result in results:
             df=df.append(result, ignore_index=True);
             if(write2disk == True):
-                result.to_csv(ct.CSV_DIR+'historyData/'+result.ix[0]['code']+'.csv')
+                write_his(result)
+
+#        if(write2disk == True):
+#            ct._write_msg('\n')
+#            writeFunc = partial(write_his)
+#            with Pool(8) as wp:
+#                wp.map(writeFunc, results)
+#                wp.close()
+#                wp.join()
 
         print('\n'+du.get_now()+' 批量获取历史行情数据结束')
         return df
@@ -63,15 +77,15 @@ def get_tick_multi(symbols=None, date=None):
     ct._write_head()
     print(du.get_now()+' 批量获取分笔数据')
     if (isinstance(symbols, list) or isinstance(symbols, set) or
-       isinstance(symbols, tuple) or isinstance(symbols, pd.Series)):
+        isinstance(symbols, tuple) or isinstance(symbols, pd.Series)):
         if(date is None):
             multiFunc = partial(td.get_today_ticks,
                                 retry_count=retry_count, pause=pause)
         else:
             multiFunc = partial(td.get_tick_data,
                                 date=date, retry_count=retry_count, pause=pause)
-        p = Pool(16)
-        results = p.map(multiFunc, symbols)
+        with Pool(16) as p:
+            results = p.map(multiFunc, symbols)
     
 
 
@@ -128,7 +142,14 @@ def calc_vol_rate(rate = 2.0):
     return select
 
 def main():
-    calc_vol_rate();
+    now = datetime.today()
+    if(du.is_holiday(now.date().strftime('%Y/%m/%d'))
+       or now.time()<time(hour=9,minute=30) or now.time()>time(hour=3)):
+        write_stockcodes()
+        write_all_his()
+        get_all_lastday()
+    else:
+        calc_vol_rate()
   
  
 if __name__ == '__main__':

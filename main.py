@@ -3,7 +3,7 @@
 Created on 2016/10/07
 @author: Cruise Huang
 '''
-from datetime import datetime,date,time
+from datetime import datetime,date,time,timedelta
 from functools import partial
 from multiprocessing import Value,Lock
 from multiprocessing.pool import Pool
@@ -20,7 +20,7 @@ def get_today_all_multi():
     print(du.get_now()+' 获取当日全部数据')
 
     multiFunc = partial(td._parsing_dayprice_json)
-    with Pool(8) as p:
+    with Pool(12) as p:
         results = p.map(multiFunc, range(1,ct.PAGE_NUM[0]))
         p.close()
         p.join()
@@ -109,6 +109,25 @@ def get_all_lastday():
     df.to_csv(ct.CSV_DIR+'stocks_v5_lastday.csv', columns=['code','v_ma5'])
     return df
 
+def timeDiff(t1,t2):
+    d = datetime.today().date()
+    return datetime.combine(d,t1) - datetime.combine(d,t2) 
+
+def tradeTime(curTime):
+    if(curTime >= time(hour=9,minute=15) and curTime < time(hour=9,minute=30)):
+        delta = timedelta(minutes=1)
+    elif(curTime > time(hour=9,minute=30) and curTime <= time(hour=11,minute=30)):
+        delta = timeDiff(curTime, time(hour=9,minute=30))
+    elif(curTime > time(hour=11,minute=30) and curTime <= time(hour=13,minute=00)):
+        delta = timedelta(hours=2)
+    elif(curTime > time(hour=13,minute=00) and curTime <= time(hour=15,minute=00)):
+        delta = timeDiff(curTime, time(hour=13,minute=00)) + timedelta(hours=2)
+    else:
+        return None
+
+    return delta.total_seconds() // 60
+
+
 def calc_vol_rate(rate = 2.0):
     loaded = pd.read_csv(ct.CSV_DIR+'stocks_v5_lastday.csv', dtype='str')
     
@@ -125,15 +144,17 @@ def calc_vol_rate(rate = 2.0):
             continue
         try:
             row = current.ix[j]
-            #The first minute
-            if ( (float(row['volume']) * 60 * 4 / v5[key] / 100 ) > rate
-                 and row['changepercent'] > 2.0
+            now = datetime.now().time()
+            vr = float(row['volume']) * 60 * 4 / tradeTime(now) / v5[key] / 100 
+            if ( vr > rate
+                 and row['changepercent'] > 2.0 and row['changepercent'] < 7.0
                  and row['trade'] > 0.0 and (row['nmc'] / row['trade']) <= 30000):
-                ct._write_msg(key + '\t')
                 data = {'code':key,
                         'name':row['name'],
                         'cp':row['changepercent'],
-                        'price':row['trade']}
+                        'price':row['trade'],
+                        'vol_rate': '%.2f' % vr }
+                ct._write_msg(data['code'] + ':' + data['vol_rate'] + '\n')
                 select.append(data)
         except KeyError as e:
             continue
@@ -143,13 +164,14 @@ def calc_vol_rate(rate = 2.0):
 
 def main():
     now = datetime.today()
+
     if(du.is_holiday(now.date().strftime('%Y/%m/%d'))
-       or now.time()<time(hour=9,minute=30) or now.time()>time(hour=3)):
+       or now.time()<time(hour=9,minute=15) or now.time()>time(hour=15)):
         write_stockcodes()
         write_all_his()
         get_all_lastday()
     else:
-        calc_vol_rate()
+        calc_vol_rate(3)
   
  
 if __name__ == '__main__':

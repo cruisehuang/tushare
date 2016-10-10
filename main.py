@@ -3,6 +3,7 @@
 Created on 2016/10/07
 @author: Cruise Huang
 '''
+import os.path
 from datetime import datetime,date,time,timedelta
 from functools import partial
 from multiprocessing import Value,Lock
@@ -56,9 +57,10 @@ def get_hists_multi(symbols, write2disk=False, start=None, end=None,
 
         df = pd.DataFrame()
         for result in results:
-            df=df.append(result, ignore_index=True);
-            if(write2disk == True):
-                write_his(result)
+            if(result is not None):
+                df=df.append(result, ignore_index=True);
+                if(write2disk == True):
+                    write_his(result)
 
 #        if(write2disk == True):
 #            ct._write_msg('\n')
@@ -96,15 +98,33 @@ def write_stockcodes():
 
 def write_all_his():
     loaded = pd.read_csv(ct.CSV_DIR+'codes.csv', dtype='str',encoding='gbk')
-    get_hists_multi(loaded['code'], write2disk=True)
+    return get_hists_multi(loaded['code'], write2disk=True)
 
-def get_all_lastday():
+def read_his(code):
+    ct._write_msg('\rReading: '+code)
+    df = pd.read_csv(ct.CSV_DIR+'historyData/'+ code+'.csv', dtype='str',encoding='gbk')
+    return df
+
+def read_all_his():
     loaded = pd.read_csv(ct.CSV_DIR+'codes.csv', dtype='str',encoding='gbk')
-    codes = loaded['code']
-    date = du.last_tddate()
+    allHis = pd.DataFrame()
+    lastDay = pd.DataFrame()
 
-    df = get_hists_multi(codes, start=date, end=date)
-  
+    readFunc = partial(read_his)
+    with Pool(16) as rp:
+        results = rp.map(readFunc, loaded['code'])
+        rp.close()
+        rp.join()
+
+    for stock in results:
+        ct._write_msg('\rHandling: '+ stock.ix[0]['code'])
+        allHis = allHis.append(stock,ignore_index=True)
+        lastDay = lastDay.append(stock.head(1),ignore_index=True)
+
+    return [allHis,lastDay]
+
+
+def write_all_lastday(df):
     df.to_csv(ct.CSV_DIR+'stocks_his_lastday.csv')
     df.to_csv(ct.CSV_DIR+'stocks_v5_lastday.csv', columns=['code','v_ma5'])
     return df
@@ -167,9 +187,14 @@ def main():
 
     if(du.is_holiday(now.date().strftime('%Y/%m/%d'))
        or now.time()<time(hour=9,minute=15) or now.time()>time(hour=15)):
-        write_stockcodes()
-        write_all_his()
-        get_all_lastday()
+        path2Codes = 'C:/Users/Cruis/home/investment/codes.csv'
+        if(os.path.exists(path2Codes) == False 
+           or datetime.fromtimestamp(os.path.getmtime(path2Codes)).date() < now.date()):
+            write_stockcodes()
+            write_all_his()
+        else:
+            df = read_all_his()
+            write_all_lastday(df[1])
     else:
         calc_vol_rate(3)
   

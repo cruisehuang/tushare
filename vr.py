@@ -5,7 +5,7 @@ Calculating Volume Rate
 @author: Cruise Huang
 
 '''
-import os.path
+import os,os.path
 from datetime import datetime,date,time,timedelta
 from functools import partial
 from multiprocessing import Value,Lock
@@ -59,15 +59,25 @@ def tradeTime(curTime):
 def calc_vol_rate(rate = 2.0):
     loaded = pd.read_csv(ct.CSV_DIR+'stocks_his_lastday.csv', dtype='str')
     
-    v5 = dict();
-    ma10 = dict();
+    stock = dict()
     for i in range(len(loaded)):
         code = loaded.ix[i]['code']
-        v5[code] = float(loaded.ix[i]['v_ma5'])
-        ma10[code] = float(loaded.ix[i]['ma10']) * 1.05 #当日开盘价在前日MA10的5%（人工总结，可调整）以内
+        data = dict()
+        data['price'] = float(loaded.ix[i]['close'])
+        data['volume'] = float(loaded.ix[i]['volume'])
+        data['per'] = float(loaded.ix[i]['p_change'])
+        data['ma5'] = float(loaded.ix[i]['ma5'])
+        data['ma10'] = float(loaded.ix[i]['ma10'])
+        data['ma20'] = float(loaded.ix[i]['ma20']) 
+        data['v5'] = float(loaded.ix[i]['v_ma5'])
+        data['v10'] = float(loaded.ix[i]['v_ma10'])
+        data['v20'] = float(loaded.ix[i]['v_ma20'])
+        stock[code] = data
+
 
     current = dataHis.get_today_all_multi()
-    select = []
+    select_raw = []
+    select_more = []
     for j in range(len(current)):
         key = str(current.ix[j]['code'])
         if(key is None):
@@ -75,30 +85,40 @@ def calc_vol_rate(rate = 2.0):
         try:
             row = current.ix[j]
             now = datetime.now().time()
-            vr = float(row['volume']) * 60 * 4 / tradeTime(now) / v5[key] / 100 
+            vr = float(row['volume']) * 60 * 4 / tradeTime(now) / stock[key]['v5'] / 100 
             price = float(row['trade'])
-            if ( vr > rate                                                     ##量比 > 2
-                 and price > 0.0 and price <= ma10[key]                        ##当日开盘价在前日MA10的5%以内
-                 and row['changepercent'] > 2.0 and row['changepercent'] < 7.0 ##涨幅 2%到7%
-                 and (row['nmc'] / row['trade']) <= 30000):                    ##流通盘小于3亿
+            if ( vr > rate and price > 0 and (row['nmc'] / row['trade']) <= 800000   ##量比 > 2 ;流通盘小于80亿
+                 and row['changepercent'] > 2.0 and row['changepercent'] < 7.0):     ##涨幅 2%到7%
                 data = {'code':key,
                         'name':row['name'],
                         'cp':row['changepercent'],
                         'price':row['trade'],
                         'vol_rate': '%.2f' % vr }
-                ct._write_msg(data['code'] + ':' + data['vol_rate'] + '\n')
-                select.append(data)
+                ct._write_msg(" \n%s %s: %s" % (data['code'],data['name'],data['vol_rate']))
+                select_raw.append(data)
+                ##更多条件
+                if( price <= stock[key]['ma10'] * 1.05                         ##当日开盘价在前日MA10的5%以内
+                    and stock[key]['volume'] < stock[key]['v10'] * 1.5          ##前一天没有放巨量
+                   ):
+                    select_more.append(data)
+                    ct._write_msg(" <==精选")
         except KeyError as e:
             continue
 
-    pd.DataFrame(select, dtype='str').to_csv(ct.CSV_DIR+'select_by_vol_rate.csv')
-    return select
+    path = ct.CSV_DIR + datetime.now().strftime('results/%Y%m%d_%H%M/')
+    os.mkdir(path)   
+    pd.DataFrame(select_raw, dtype='str').to_csv(path+'select_vr.csv')
+    pd.DataFrame(select_more, dtype='str').to_csv(path+'select_filter_vr.csv')
 
 def main():
-    path2Codes = 'C:/Users/Cruis/home/investment/stocks_his_lastday.csv'
-    if(os.path.exists(path2Codes) == False):
+    path2Ref = ct.CSV_DIR+'stocks_his_lastday.csv'
+    if(os.path.exists(path2Ref) == False):
         print('Ref File Not existed!')
         return
+
+    resultPath = ct.CSV_DIR+'results/'
+    if(os.path.exists(resultPath) == False):
+        os.mkdir(resultPath)
 
     calc_vol_rate()
   

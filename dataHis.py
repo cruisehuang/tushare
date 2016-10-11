@@ -116,7 +116,7 @@ def write_all_lastday(df):
 
 def main():
     now = datetime.today()
-    path2Codes = 'C:/Users/Cruis/home/investment/codes.csv'
+    path2Codes = ct.CSV_DIR+'codes.csv'
         
     if(os.path.exists(path2Codes) == False 
        or (now.time() > time(hour=15) and datetime.fromtimestamp(os.path.getmtime(path2Codes)).date() < now.date())):

@@ -128,7 +128,7 @@ TOKEN_ERR_MSG = '请设置通联数据接口的token凭证码'
 BOX_INPUT_ERR_MSG = '请输入YYYY-MM格式的年月数据'
 
 #Added by Cruise Huang
-CSV_DIR = '~/home/investment/'
+CSV_DIR = 'C:/Users/Cruis/home/investment/'
 
 import sys
 PY3 = (sys.version_info[0] >= 3)

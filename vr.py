@@ -55,9 +55,18 @@ def tradeTime(curTime):
 
     return delta.total_seconds() // 60
 
+def readNews():
+    news = pd.read_csv(ct.CSV_DIR+'20161012.csv', dtype='str')
+    codesInNews = []
+    for i in range(len(news)):
+        code = news.ix[i]['head'].split('.')[0]
+        codesInNews.append(code)    
+
+    return codesInNews
 
 def calc_vol_rate(rate = 2.0):
     loaded = pd.read_csv(ct.CSV_DIR+'stocks_his_lastday.csv', dtype='str')
+    news = readNews()
     
     stock = dict()
     for i in range(len(loaded)):
@@ -76,8 +85,7 @@ def calc_vol_rate(rate = 2.0):
 
 
     current = dataHis.get_today_all_multi()
-    select_raw = []
-    select_more = []
+    selected = []
     for j in range(len(current)):
         key = str(current.ix[j]['code'])
         if(key is None):
@@ -89,26 +97,33 @@ def calc_vol_rate(rate = 2.0):
             price = float(row['trade'])
             if ( vr > rate and price > 0 and (row['nmc'] / row['trade']) <= 800000   ##量比 > 2 ;流通盘小于80亿
                  and row['changepercent'] > 2.0 and row['changepercent'] < 7.0):     ##涨幅 2%到7%
-                data = {'code':key,
+                sel = {'code':key,
                         'name':row['name'],
                         'cp':row['changepercent'],
                         'price':row['trade'],
                         'vol_rate': '%.2f' % vr }
-                ct._write_msg(" \n%s %s: %s" % (data['code'],data['name'],data['vol_rate']))
-                select_raw.append(data)
+                ct._write_msg(" \n%s %s: %s" % (sel['code'],sel['name'],sel['vol_rate']))
+                
                 ##更多条件
                 if( price <= stock[key]['ma10'] * 1.05                         ##当日开盘价在前日MA10的5%以内
                     and stock[key]['volume'] < stock[key]['v10'] * 1.5          ##前一天没有放巨量
                    ):
-                    select_more.append(data)
+                    sel['note'] = '精选'
                     ct._write_msg(" <==精选")
+
+                if( key in news):
+                    sel['news'] = '利好'
+                    ct._write_msg(" <==利好")
+                
+                selected.append(sel)
+                
+
         except KeyError as e:
             continue
 
     path = ct.CSV_DIR + datetime.now().strftime('results/%Y%m%d_%H%M/')
     os.mkdir(path)   
-    pd.DataFrame(select_raw, dtype='str').to_csv(path+'select_vr.csv')
-    pd.DataFrame(select_more, dtype='str').to_csv(path+'select_filter_vr.csv')
+    pd.DataFrame(selected, dtype='str').to_csv(path+'select_vr.csv')
 
 def main():
     path2Ref = ct.CSV_DIR+'stocks_his_lastday.csv'

@@ -33,10 +33,22 @@ def get_today_all_multi():
     print('\n'+du.get_now()+' 获取当日全部数据结束')
     return df
 
-def write_his(result):
-    path = ct.CSV_DIR+'historyData/'+result.ix[0]['code']+'.csv'
+def write_his(result, path):
     ct._write_msg('\rWriting to:' + path)
     result.to_csv(path)
+
+def get_his(symbol, write2disk):
+    path2Stock = ct.CSV_DIR+'historyData/'+ symbol +'.csv'
+    path2Codes = ct.CSV_DIR+'codes.csv'
+    if(os.path.exists(path2Stock) and 
+       datetime.fromtimestamp(os.path.getmtime(path2Codes)).date() == datetime.fromtimestamp(os.path.getmtime(path2Stock)).date()):
+        return
+
+    df = td.get_hist_data(code=symbol,start=None, end=None,
+                          ktype='D', retry_count=3, pause=0.001)
+    if(write2disk and df is not None):
+        write_his(df, path2Stock)
+
 
 def get_hists_multi(symbols, write2disk=False, start=None, end=None,
                     ktype='D', retry_count=3,
@@ -47,31 +59,13 @@ def get_hists_multi(symbols, write2disk=False, start=None, end=None,
     ct._write_head()
     print(du.get_now()+' 批量获取历史行情数据')
     if isinstance(symbols, list) or isinstance(symbols, set) or isinstance(symbols, tuple) or isinstance(symbols, pd.Series):
-        multiFunc = partial(td.get_hist_data,start=start, end=end,
-                                             ktype=ktype, retry_count=retry_count,
-                                             pause=pause)
+        multiFunc = partial(get_his, write2disk=True)
         with Pool(8) as p:
             results = p.map(multiFunc, symbols)
             p.close()
             p.join()
 
-        df = pd.DataFrame()
-        for result in results:
-            if(result is not None):
-                df=df.append(result, ignore_index=True);
-                if(write2disk == True):
-                    write_his(result)
-
-#        if(write2disk == True):
-#            ct._write_msg('\n')
-#            writeFunc = partial(write_his)
-#            with Pool(8) as wp:
-#                wp.map(writeFunc, results)
-#                wp.close()
-#                wp.join()
-
         print('\n'+du.get_now()+' 批量获取历史行情数据结束')
-        return df
     else:
         return None
 
@@ -83,7 +77,7 @@ def write_stockcodes():
 
 def write_all_his():
     loaded = pd.read_csv(ct.CSV_DIR+'codes.csv', dtype='str',encoding='gbk')
-    return get_hists_multi(loaded['code'], write2disk=True)
+    get_hists_multi(loaded['code'], write2disk=True)
 
 def read_his(code):
     ct._write_msg('\rReading: '+code)
@@ -117,9 +111,13 @@ def write_all_lastday(df):
 def main():
     now = datetime.today()
     path2Codes = ct.CSV_DIR+'codes.csv'
+    path2Stock = ct.CSV_DIR+'historyData/'
+
+    fileCount =  len(os.listdir(path2Stock))
         
     if(os.path.exists(path2Codes) == False 
-       or (now.time() > time(hour=15) and datetime.fromtimestamp(os.path.getmtime(path2Codes)).date() < now.date())):
+       or (now.time() > time(hour=15) and datetime.fromtimestamp(os.path.getmtime(path2Codes)).date() < now.date())
+       or fileCount < len(pd.read_csv(ct.CSV_DIR+'codes.csv', dtype='str',encoding='gbk'))):
         write_stockcodes()
         write_all_his()
     else:

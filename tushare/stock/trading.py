@@ -49,8 +49,6 @@ def get_hist_data(code=None, start=None, end=None,
       DataFrame
           属性:日期 ，开盘价， 最高价， 收盘价， 最低价， 成交量， 价格变动 ，涨跌幅，5日均价，10日均价，20日均价，5日均量，10日均量，20日均量，换手率
     """
-    ct._write_msg('\r' + code)
-
     symbol = _code_to_symbol(code)
     url = ''
     if ktype.upper() in ct.K_LABELS:

@@ -8,7 +8,6 @@ Calculating Volume Rate
 import os,os.path
 from datetime import datetime,date,time,timedelta
 from functools import partial
-from multiprocessing import Value,Lock
 from multiprocessing.pool import Pool
 
 import pandas as pd
@@ -98,22 +97,22 @@ def calc_vol_rate(rate = 2.0):
             price = float(row['trade'])
             if ( vr > rate and price > 0 and (row['nmc'] / row['trade']) <= 800000   ##量比 > 2 ;流通盘小于80亿
                  and row['changepercent'] > 2.0 and row['changepercent'] < 7.0):     ##涨幅 2%到7%
-                sel = {'code':key,
-                        'name':row['name'],
-                        'cp':row['changepercent'],
-                        'price':row['trade'],
-                        'vol_rate': '%.2f' % vr }
-                ct._write_msg(" \n%s %s: %s" % (sel['code'],sel['name'],sel['vol_rate']))
+                sel = {'1_code':key,
+                       '2_name':row['name'],
+                       '3_cp':row['changepercent'],
+                       '4_price':row['trade'],
+                       '5_vol_rate': '%.2f' % vr }
+                ct._write_msg(" \n%s %s: %s" % (sel['1_code'],sel['2_name'],sel['5_vol_rate']))
                 
                 ##更多条件
                 if( price <= stock[key]['ma10'] * 1.05                         ##当日开盘价在前日MA10的5%以内
                     and stock[key]['volume'] < stock[key]['v10'] * 1.5          ##前一天没有放巨量
                    ):
-                    sel['note'] = '精选'
+                    sel['7_note'] = '精选'
                     ct._write_msg(" <==精选")
 
                 if( key in news):
-                    sel['news'] = '利好'
+                    sel['6_news'] = '利好'
                     ct._write_msg(" <==利好")
                 
                 selected.append(sel)

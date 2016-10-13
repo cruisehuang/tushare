@@ -92,12 +92,13 @@ def calc_vol_rate(rate = 2.0):
             continue
         try:
             row = current.ix[j]
-            now = datetime.now().time()
-            vr = float(row['volume']) * 60 * 4 / tradeTime(now) / stock[key]['v5'] / 100 
+            now = datetime.now()
+            vr = float(row['volume']) * 60 * 4 / tradeTime(now.time()) / stock[key]['v5'] / 100 
             price = float(row['trade'])
             if ( vr > rate and price > 0 and (row['nmc'] / row['trade']) <= 800000   ##量比 > 2 ;流通盘小于80亿
                  and row['changepercent'] > 2.0 and row['changepercent'] < 7.0):     ##涨幅 2%到7%
-                sel = {'1_code':key,
+                sel = {'0_date': now.date().isoformat(),
+                       '1_code':key,
                        '2_name':row['name'],
                        '3_cp':row['changepercent'],
                        '4_price':row['trade'],

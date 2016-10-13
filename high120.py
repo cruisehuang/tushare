@@ -1,7 +1,7 @@
 # -*- coding:utf-8 -*- 
 '''
 Created on 2016/10/10
-Calculating Volume Rate
+Calculating New High in 120 days
 @author: Cruise Huang
 
 '''

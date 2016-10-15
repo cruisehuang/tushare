@@ -52,12 +52,13 @@ def review(dateFile):
     with Pool(16) as p:
         results = p.map(multiFunc, selected['code'])
 
-    pd.DataFrame(results, dtype='str').to_csv(ct.CSV_DIR+'review/'+'review_raw.csv')
+    pd.DataFrame(results, dtype='str').to_csv(ct.CSV_DIR+'review/'+'review_raw_'+dateFile+'.csv')
+
 
 
 def main():
-    review('2016-10-13')
-  
+    review('2016-10-14')
+
  
 if __name__ == '__main__':
     main()

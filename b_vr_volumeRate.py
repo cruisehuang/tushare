@@ -16,7 +16,7 @@ from tushare.stock import trading as td
 from tushare.stock import cons as ct
 from tushare.util import dateu as du
 
-import dataHis 
+import a_dc_dataCollect as dc
 
 #Not used
 def get_tick_multi(symbols=None, date=None):
@@ -56,6 +56,9 @@ def tradeTime(curTime):
 
 def readNews():
     path2News = datetime.now().strftime('news/%Y%m%d.csv')
+    if(os.path.exists(path2News) == False):
+        return []
+
     news = pd.read_csv(ct.CSV_DIR+path2News, dtype='str')
     codesInNews = []
     for i in range(len(news)):
@@ -84,7 +87,7 @@ def calc_vol_rate(rate = 2.0):
         stock[code] = data
 
 
-    current = dataHis.get_today_all_multi()
+    current = dc.get_today_all_multi()
     selected = []
     for j in range(len(current)):
         key = str(current.ix[j]['code'])
@@ -124,7 +127,7 @@ def calc_vol_rate(rate = 2.0):
 
     path = ct.CSV_DIR + datetime.now().strftime('results/%Y%m%d_%H%M/')
     os.mkdir(path)   
-    pd.DataFrame(selected, dtype='str').to_csv(path+'select_vr.csv')
+    pd.DataFrame(selected, dtype='str').to_csv(path+'select_vr.csv',encoding='gbk')
 
 def main():
     path2Ref = ct.CSV_DIR+'stocks_his_lastday.csv'

@@ -14,9 +14,11 @@ import pandas as pd
 
 from tushare.stock import cons as ct
 
+PATH_2_HIS_DATA = ct.CSV_DIR+'historyData/'
+PATH_2_REVIEW = ct.CSV_DIR+'review/'
 
 def _review(code,dateFile):
-    path2Stock = ct.CSV_DIR+'historyData/' + code+'.csv';
+    path2Stock = PATH_2_HIS_DATA + code+'.csv';
     df = pd.read_csv(path2Stock, dtype='str',encoding='gbk')
     sorted_df = df.sort_values('date')
 
@@ -32,7 +34,7 @@ def _review(code,dateFile):
     for i,r in sorted_df.iterrows():
         rDate = r['date']
         if(datetime.strptime(rDate, '%Y-%m-%d') < date or 
-           datetime.strptime(rDate, '%Y-%m-%d') - date > timedelta(days=5)):
+           datetime.strptime(rDate, '%Y-%m-%d') - date > timedelta(days=6)):
             continue
 
         if(datetime.strptime(rDate, '%Y-%m-%d') == date):
@@ -46,18 +48,18 @@ def _review(code,dateFile):
     return result
 
 def review(dateFile):
-    selected = pd.read_csv(ct.CSV_DIR+'review/'+dateFile+'.csv', dtype='str',encoding='gbk')
+    selected = pd.read_csv(PATH_2_REVIEW+dateFile+'.csv', dtype='str',encoding='gbk')
 
     multiFunc = partial(_review,dateFile=dateFile)
     with Pool(16) as p:
         results = p.map(multiFunc, selected['code'])
 
-    pd.DataFrame(results, dtype='str').to_csv(ct.CSV_DIR+'review/'+'review_raw_'+dateFile+'.csv')
+    pd.DataFrame(results, dtype='str').to_csv(PATH_2_REVIEW+'review_raw_'+dateFile+'.csv')
 
 
 
 def main():
-    review('2016-10-14')
+    review('2016-10-11')
 
  
 if __name__ == '__main__':

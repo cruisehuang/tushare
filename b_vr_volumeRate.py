@@ -55,11 +55,12 @@ def tradeTime(curTime):
     return delta.total_seconds() // 60
 
 def readNews():
-    path2News = datetime.now().strftime('news/%Y%m%d.csv')
+    path2News = ct.CSV_DIR + datetime.now().strftime('news/%Y%m%d.csv')
     if(os.path.exists(path2News) == False):
+        print(path2News)
         return []
 
-    news = pd.read_csv(ct.CSV_DIR+path2News, dtype='str')
+    news = pd.read_csv(path2News, dtype='str')
     codesInNews = []
     for i in range(len(news)):
         code = news.ix[i]['head'].split('.')[0]

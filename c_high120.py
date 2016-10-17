@@ -14,10 +14,10 @@ import pandas as pd
 
 from tushare.stock import cons as ct
 
-
+PATH_2_HIS_DATA = ct.CSV_DIR+'historyData/'
 
 def _calc(file):
-    path2Stock = ct.CSV_DIR+'historyData/' + file;
+    path2Stock = PATH_2_HIS_DATA + file;
     df = pd.read_csv(path2Stock, dtype='str',encoding='gbk')
     if len(df)<5:
         return
@@ -44,8 +44,7 @@ def _calc(file):
 
 
 def calc_high_120():
-    path2Stock = ct.CSV_DIR+'historyData/'
-    stocks = os.listdir(path2Stock)
+    stocks = os.listdir(PATH_2_HIS_DATA)
     
     multiFunc = partial(_calc)
     with Pool(16) as p:

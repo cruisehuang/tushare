@@ -15,6 +15,9 @@ from tushare.stock import trading as td
 from tushare.stock import cons as ct
 from tushare.util import dateu as du
 
+PATH_2_HIS_DATA = ct.CSV_DIR+'historyData/'
+FILE_CODES_CSV = ct.CSV_DIR+'codes.csv'
+
 
 def get_today_all_multi():
     ct._write_head()
@@ -38,10 +41,9 @@ def write_his(result, path):
     result.to_csv(path)
 
 def get_his(symbol, write2disk):
-    path2Stock = ct.CSV_DIR+'historyData/'+ symbol +'.csv'
-    path2Codes = ct.CSV_DIR+'codes.csv'
+    path2Stock = PATH_2_HIS_DATA + symbol +'.csv'
     if(os.path.exists(path2Stock) and 
-       datetime.fromtimestamp(os.path.getmtime(path2Codes)).date() == datetime.fromtimestamp(os.path.getmtime(path2Stock)).date()):
+       datetime.fromtimestamp(os.path.getmtime(FILE_CODES_CSV)).date() == datetime.fromtimestamp(os.path.getmtime(path2Stock)).date()):
         return
 
     df = td.get_hist_data(code=symbol,start=None, end=None,
@@ -73,19 +75,19 @@ def get_hists_multi(symbols, write2disk=False, start=None, end=None,
 def write_stockcodes():
     stockCodes = get_today_all_multi()
     stockCodes.to_csv(ct.CSV_DIR+'all_today.csv')
-    stockCodes.to_csv(ct.CSV_DIR+'codes.csv', columns=['code','name'])
+    stockCodes.to_csv(FILE_CODES_CSV, columns=['code','name'])
 
 def write_all_his():
-    loaded = pd.read_csv(ct.CSV_DIR+'codes.csv', dtype='str',encoding='gbk')
+    loaded = pd.read_csv(FILE_CODES_CSV, dtype='str',encoding='gbk')
     get_hists_multi(loaded['code'], write2disk=True)
 
 def read_his(code):
     ct._write_msg('\rReading: '+code)
-    df = pd.read_csv(ct.CSV_DIR+'historyData/'+ code+'.csv', dtype='str',encoding='gbk')
+    df = pd.read_csv(PATH_2_HIS_DATA + code+'.csv', dtype='str',encoding='gbk')
     return df
 
 def read_all_his():
-    loaded = pd.read_csv(ct.CSV_DIR+'codes.csv', dtype='str',encoding='gbk')
+    loaded = pd.read_csv(FILE_CODES_CSV, dtype='str',encoding='gbk')
     allHis = pd.DataFrame()
     lastDay = pd.DataFrame()
 
@@ -110,14 +112,11 @@ def write_all_lastday(df):
 
 def main():
     now = datetime.today()
-    path2Codes = ct.CSV_DIR+'codes.csv'
-    path2Stock = ct.CSV_DIR+'historyData/'
-
-    fileCount =  len(os.listdir(path2Stock))
+    fileCount =  len(os.listdir(PATH_2_HIS_DATA))
         
-    if(os.path.exists(path2Codes) == False 
-       or (now.time() > time(hour=15) and datetime.fromtimestamp(os.path.getmtime(path2Codes)).date() < now.date())
-       or fileCount < len(pd.read_csv(ct.CSV_DIR+'codes.csv', dtype='str',encoding='gbk'))):
+    if(os.path.exists(FILE_CODES_CSV) == False 
+       or (now.time() > time(hour=15) and datetime.fromtimestamp(os.path.getmtime(FILE_CODES_CSV)).date() < now.date())
+       or fileCount < len(pd.read_csv(FILE_CODES_CSV, dtype='str',encoding='gbk'))):
         write_stockcodes()
         write_all_his()
     else:

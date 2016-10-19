@@ -13,6 +13,7 @@ from multiprocessing.pool import Pool
 import pandas as pd
 
 from tushare.stock import cons as ct
+from tushare.util import dateu as du
 
 PATH_2_HIS_DATA = ct.CSV_DIR+'historyData/'
 PATH_2_REVIEW = ct.CSV_DIR+'review/'
@@ -59,7 +60,14 @@ def review(dateFile):
 
 
 def main():
-    review('2016-10-11')
+    today = datetime.today()
+    dayCount = 0
+    while dayCount <= 5:
+        if(du.is_holiday(today.strftime('%Y/%m/%d')) == False):
+            review(today.date().isoformat())
+            
+        today = today - timedelta(days=1)
+        dayCount+=1
 
  
 if __name__ == '__main__':

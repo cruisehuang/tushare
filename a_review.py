@@ -62,13 +62,13 @@ def review(dateFile):
 def main():
     today = datetime.today()
     dayCount = 0
-    while dayCount <= 5:
+    while dayCount <= 6:
         if(du.is_holiday(today.strftime('%Y/%m/%d')) == False):
             review(today.date().isoformat())
             
         today = today - timedelta(days=1)
         dayCount+=1
 
- 
+
 if __name__ == '__main__':
     main()

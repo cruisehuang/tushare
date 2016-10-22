@@ -119,9 +119,9 @@ def main():
        or fileCount < len(pd.read_csv(FILE_CODES_CSV, dtype='str',encoding='gbk'))):
         write_stockcodes()
         write_all_his()
-    else:
-        df = read_all_his()
-        write_all_lastday(df[1])
+    
+    df = read_all_his()
+    write_all_lastday(df[1])
  
 if __name__ == '__main__':
     main()

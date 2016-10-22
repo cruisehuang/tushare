@@ -39,9 +39,9 @@ def timeDiff(t1,t2):
     return datetime.combine(d,t1) - datetime.combine(d,t2) 
 
 def tradeTime(curTime):
-    if(curTime >= time(hour=9,minute=15) and curTime < time(hour=9,minute=30)):
+    if(curTime >= time(hour=9,minute=15) and curTime < time(hour=9,minute=31)):
         delta = timedelta(minutes=1)
-    elif(curTime > time(hour=9,minute=30) and curTime <= time(hour=11,minute=30)):
+    elif(curTime >= time(hour=9,minute=31) and curTime <= time(hour=11,minute=30)):
         delta = timeDiff(curTime, time(hour=9,minute=30))
     elif(curTime > time(hour=11,minute=30) and curTime <= time(hour=13,minute=00)):
         delta = timedelta(hours=2)
@@ -68,25 +68,29 @@ def readNews():
 
     return codesInNews
 
-def calc_vol_rate(rate = 2.0):
+def readDataLastday():
     loaded = pd.read_csv(ct.CSV_DIR+'stocks_his_lastday.csv', dtype='str')
-    news = readNews()
-    
     stock = dict()
+
     for i in range(len(loaded)):
         code = loaded.ix[i]['code']
         data = dict()
-        data['price'] = float(loaded.ix[i]['close'])
+        #data['price'] = float(loaded.ix[i]['close'])
         data['volume'] = float(loaded.ix[i]['volume'])
-        data['per'] = float(loaded.ix[i]['p_change'])
-        data['ma5'] = float(loaded.ix[i]['ma5'])
+        #data['per'] = float(loaded.ix[i]['p_change'])
+        #data['ma5'] = float(loaded.ix[i]['ma5'])
         data['ma10'] = float(loaded.ix[i]['ma10'])
-        data['ma20'] = float(loaded.ix[i]['ma20']) 
+        #data['ma20'] = float(loaded.ix[i]['ma20']) 
         data['v5'] = float(loaded.ix[i]['v_ma5'])
         data['v10'] = float(loaded.ix[i]['v_ma10'])
-        data['v20'] = float(loaded.ix[i]['v_ma20'])
+        #data['v20'] = float(loaded.ix[i]['v_ma20'])
         stock[code] = data
 
+    return stock
+
+def calc_vol_rate(rate = 2.0):
+    news = readNews()
+    stock = readDataLastday()
 
     current = dc.get_today_all_multi()
     selected = []
@@ -106,7 +110,7 @@ def calc_vol_rate(rate = 2.0):
                        '2_name':row['name'],
                        '3_cp':row['changepercent'],
                        '4_price':row['trade'],
-                       '5_vol_rate': '%.2f' % vr }
+                       '5_vol_rate': '%.2f%%' % vr }
                 ct._write_msg(" \n%s %s: %s" % (sel['1_code'],sel['2_name'],sel['5_vol_rate']))
                 
                 ##更多条件
@@ -126,9 +130,10 @@ def calc_vol_rate(rate = 2.0):
         except KeyError as e:
             continue
 
-    path = ct.CSV_DIR + datetime.now().strftime('results/%Y%m%d_%H%M/')
+    path = ct.CSV_DIR + datetime.now().strftime('results/vr_open/%Y%m%d_%H%M/')
     os.mkdir(path)   
     pd.DataFrame(selected, dtype='str').to_csv(path+'select_vr.csv',encoding='gbk')
+    return selected
 
 def main():
     path2Ref = ct.CSV_DIR+'stocks_his_lastday.csv'
@@ -141,7 +146,6 @@ def main():
         os.mkdir(resultPath)
 
     calc_vol_rate()
-  
  
 if __name__ == '__main__':
     main()

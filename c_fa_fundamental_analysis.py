@@ -50,7 +50,7 @@ def split_data_by_codes():
 
 
 def main():
-    #get_save_3y_fund_data()
+    get_save_3y_fund_data()
     split_data_by_codes()
       
  

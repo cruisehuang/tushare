@@ -1,13 +1,13 @@
 # -*- coding:utf-8 -*- 
 '''
 Created on 2016/10/10
-Calculating Volume Rate
+Calculating continuously VR increase
 @author: Cruise Huang
 
 '''
 import os,os.path
 from datetime import datetime,date,time,timedelta
-import time
+import time as tm
 import cmath
 from functools import partial
 from multiprocessing.pool import Pool
@@ -33,6 +33,7 @@ def fillinVr(lastDay, time, currentData):
 
 def calcu(current, last):
     selected = []
+    bb = vr.readBillboard()
     merged = last.merge(current, on='code',suffixes=('','_cur'))
 
     for i,r in merged.iterrows():
@@ -50,6 +51,14 @@ def calcu(current, last):
                    '4_vr_rate': '%.2f%%' % vrRate
                    }
             ct._write_msg(" \n%s %s: 价格上涨%s 量比增加%s" % (sel['1_code'],sel['2_name'],sel['3_p_rate'],sel['4_vr_rate']))
+
+            if( key in bb.keys() ):
+                bbRow = bb[key]
+                sel['8_BB'] = '龙虎榜'
+                sel['8_1_count'] = str(bbRow['count_5'])+'/'+str(bbRow['count_10'])
+                sel['8_2_net'] = str(bbRow['net_5'])+'/'+str(bbRow['net_10']) 
+                ct._write_msg(" <==龙虎榜：" + sel['8_1_count'] ) 
+
             selected.append(sel)
 
     now = datetime.now()
@@ -75,24 +84,26 @@ def main():
     last = None
     while True:
         now = datetime.now().time()
+        ct._write_msg('\r'+now.isoformat())
+
         '''
         if(now > time(hour=11,minute=30) and now < time(hour=13)):
             continue
         if(now < time(hour=9, minute=31) or now > time(hour=15)):
             break
         '''
+        ct._write_msg('\n')
         current = dc.get_today_all_multi()
         fillinVr(lastDay = dataLastday, time=now, currentData=current)
 
-        todayAll[now.isoformat()] = current;
+        todayAll[now.isoformat()] = current #not used for now
 
         if(last is not None):
             calcu(current=current, last=last)
         
         last = current
 
-        ct._write_msg('\r'+now.isoformat())
-        time.sleep(60*INTERVAL)
+        tm.sleep(60*INTERVAL)
   
  
 if __name__ == '__main__':

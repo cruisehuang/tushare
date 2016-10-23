@@ -12,10 +12,12 @@ from multiprocessing.pool import Pool
 import pandas as pd
 
 from tushare.stock import trading as td
+from tushare.stock import billboard as bb
 from tushare.stock import cons as ct
 from tushare.util import dateu as du
 
 PATH_2_HIS_DATA = ct.CSV_DIR+'historyData/'
+PATH_2_BILLBOARD = ct.CSV_DIR+'billboard/'
 FILE_CODES_CSV = ct.CSV_DIR+'codes.csv'
 
 
@@ -109,6 +111,20 @@ def write_all_lastday(df):
     df.to_csv(ct.CSV_DIR+'stocks_his_lastday.csv')
     return df
 
+def write_billboard():
+    if(os.path.exists(PATH_2_BILLBOARD) == False):
+        os.mkdir(PATH_2_BILLBOARD)
+
+    dateStr = datetime.today().strftime('%Y%m%d')
+
+    df5 = bb.cap_tops(days=5)
+    #df5.to_csv(PATH_2_BILLBOARD+dateStr+'_5d.csv',encoding='gbk')
+
+    df10 = bb.cap_tops(days=10)
+    #df10.to_csv(PATH_2_BILLBOARD+dateStr+'_10d.csv',encoding='gbk')
+
+    merged = df5.merge(df10, on=['code','name'],suffixes=('_5','_10'),how='outer')
+    merged.to_csv(PATH_2_BILLBOARD+dateStr+'_merged.csv',encoding='gbk')
 
 def main():
     now = datetime.today()
@@ -120,8 +136,10 @@ def main():
         write_stockcodes()
         write_all_his()
     
-    df = read_all_his()
-    write_all_lastday(df[1])
+        df = read_all_his()
+        write_all_lastday(df[1])
+
+    write_billboard()
  
 if __name__ == '__main__':
     main()

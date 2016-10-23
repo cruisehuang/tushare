@@ -60,13 +60,26 @@ def readNews():
         print(path2News)
         return []
 
-    news = pd.read_csv(path2News, dtype='str')
+    news = pd.read_csv(path2News, dtype='str',encoding='gbk')
     codesInNews = []
     for i in range(len(news)):
         code = news.ix[i]['head'].split('.')[0]
         codesInNews.append(code)    
 
     return codesInNews
+
+def readBillboard():
+    path2BB= ct.CSV_DIR + datetime.now().strftime('billboard/%Y%m%d_merged.csv')
+    if(os.path.exists(path2BB) == False):
+        return []
+
+    bb = pd.read_csv(path2BB, dtype='str',encoding='gbk')
+    bbDict = dict()
+    for i,r in bb.iterrows():
+        code = r['code']
+        bbDict[code] = r
+
+    return bbDict
 
 def readDataLastday():
     loaded = pd.read_csv(ct.CSV_DIR+'stocks_his_lastday.csv', dtype='str')
@@ -90,6 +103,7 @@ def readDataLastday():
 
 def calc_vol_rate(rate = 2.0):
     news = readNews()
+    bb = readBillboard()
     stock = readDataLastday()
 
     current = dc.get_today_all_multi()
@@ -123,7 +137,14 @@ def calc_vol_rate(rate = 2.0):
                 if( key in news):
                     sel['6_news'] = '利好'
                     ct._write_msg(" <==利好")
-                
+
+                if( key in bb.keys() ):
+                    bbRow = bb[key]
+                    sel['8_BB'] = '龙虎榜'
+                    sel['8_1_count'] = bbRow['count_5']+'/'+bbRow['count_10']
+                    sel['8_2_net'] = bbRow['net_5']+'/'+bbRow['net_10'] 
+                    ct._write_msg(" <==龙虎榜：" + sel['8_1_count'] ) 
+
                 selected.append(sel)
                 
 

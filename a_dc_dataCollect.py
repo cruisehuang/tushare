@@ -40,7 +40,7 @@ def get_today_all_multi():
 
 def write_his(result, path):
     ct._write_msg('\rWriting to:' + path)
-    result.to_csv(path)
+    result.to_csv(path, encoding='utf8')
 
 def get_his(symbol, write2disk):
     path2Stock = PATH_2_HIS_DATA + symbol +'.csv'
@@ -76,20 +76,20 @@ def get_hists_multi(symbols, write2disk=False, start=None, end=None,
 
 def write_stockcodes():
     stockCodes = get_today_all_multi()
-    stockCodes.to_csv(ct.CSV_DIR+'all_today.csv')
-    stockCodes.to_csv(FILE_CODES_CSV, columns=['code','name'])
+    stockCodes.to_csv(ct.CSV_DIR+'all_today.csv',encoding='utf8')
+    stockCodes.to_csv(FILE_CODES_CSV, columns=['code','name'], encoding='utf8')
 
 def write_all_his():
-    loaded = pd.read_csv(FILE_CODES_CSV, dtype='str',encoding='gbk')
+    loaded = pd.read_csv(FILE_CODES_CSV, dtype='str', encoding='utf8')
     get_hists_multi(loaded['code'], write2disk=True)
 
 def read_his(code):
     ct._write_msg('\rReading: '+code)
-    df = pd.read_csv(PATH_2_HIS_DATA + code+'.csv', dtype='str',encoding='gbk')
+    df = pd.read_csv(PATH_2_HIS_DATA + code+'.csv', dtype='str', encoding='utf8')
     return df
 
 def read_all_his():
-    loaded = pd.read_csv(FILE_CODES_CSV, dtype='str',encoding='gbk')
+    loaded = pd.read_csv(FILE_CODES_CSV, dtype='str', encoding='utf8')
     allHis = pd.DataFrame()
     lastDay = pd.DataFrame()
 
@@ -108,23 +108,22 @@ def read_all_his():
 
 
 def write_all_lastday(df):
-    df.to_csv(ct.CSV_DIR+'stocks_his_lastday.csv')
+    df.to_csv(ct.CSV_DIR+'stocks_his_lastday.csv', encoding='utf8')
     return df
 
 def write_billboard():
     if(os.path.exists(PATH_2_BILLBOARD) == False):
         os.mkdir(PATH_2_BILLBOARD)
 
-    dateStr = datetime.today().strftime('%Y%m%d')
+    dateStr = (datetime.today() + timedelta(days=1)).strftime('%Y%m%d')
 
     df5 = bb.cap_tops(days=5)
     #df5.to_csv(PATH_2_BILLBOARD+dateStr+'_5d.csv',encoding='gbk')
-
     df10 = bb.cap_tops(days=10)
     #df10.to_csv(PATH_2_BILLBOARD+dateStr+'_10d.csv',encoding='gbk')
 
     merged = df5.merge(df10, on=['code','name'],suffixes=('_5','_10'),how='outer')
-    merged.to_csv(PATH_2_BILLBOARD+dateStr+'_merged.csv',encoding='gbk')
+    merged.to_csv(PATH_2_BILLBOARD+dateStr+'_merged.csv', encoding='utf8')
 
 def main():
     now = datetime.today()
@@ -132,12 +131,12 @@ def main():
         
     if(os.path.exists(FILE_CODES_CSV) == False 
        or (now.time() > time(hour=15) and datetime.fromtimestamp(os.path.getmtime(FILE_CODES_CSV)).date() < now.date())
-       or fileCount < len(pd.read_csv(FILE_CODES_CSV, dtype='str',encoding='gbk'))):
+       or fileCount < len(pd.read_csv(FILE_CODES_CSV, dtype='str', encoding='utf8'))):
         write_stockcodes()
         write_all_his()
     
-        df = read_all_his()
-        write_all_lastday(df[1])
+    df = read_all_his()
+    write_all_lastday(df[1])
 
     write_billboard()
  

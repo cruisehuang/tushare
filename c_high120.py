@@ -18,7 +18,7 @@ PATH_2_HIS_DATA = ct.CSV_DIR+'historyData/'
 
 def _calc(file):
     path2Stock = PATH_2_HIS_DATA + file;
-    df = pd.read_csv(path2Stock, dtype='str',encoding='gbk')
+    df = pd.read_csv(path2Stock, dtype='str', encoding='utf8')
     if len(df)<5:
         return
 
@@ -52,7 +52,7 @@ def calc_high_120():
 
     path = ct.CSV_DIR + datetime.now().strftime('results/%Y%m%d_%H%M/')
     os.mkdir(path)   
-    pd.DataFrame([r for r in results if r is not None], dtype='str').to_csv(path+'select_h120.csv')
+    pd.DataFrame([r for r in results if r is not None], dtype='str').to_csv(path+'select_h120.csv', encoding='utf8')
 
 def main():
 

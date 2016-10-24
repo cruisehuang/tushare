@@ -60,7 +60,7 @@ def readNews():
         print(path2News)
         return []
 
-    news = pd.read_csv(path2News, dtype='str',encoding='gbk')
+    news = pd.read_csv(path2News, dtype='str', encoding='utf8')
     codesInNews = []
     for i in range(len(news)):
         code = news.ix[i]['head'].split('.')[0]
@@ -73,7 +73,7 @@ def readBillboard():
     if(os.path.exists(path2BB) == False):
         return []
 
-    bb = pd.read_csv(path2BB, dtype='str',encoding='gbk')
+    bb = pd.read_csv(path2BB, dtype='str', encoding='utf8')
     bbDict = dict()
     for i,r in bb.iterrows():
         code = r['code']
@@ -82,7 +82,7 @@ def readBillboard():
     return bbDict
 
 def readDataLastday():
-    loaded = pd.read_csv(ct.CSV_DIR+'stocks_his_lastday.csv', dtype='str')
+    loaded = pd.read_csv(ct.CSV_DIR+'stocks_his_lastday.csv', dtype='str', encoding='utf8')
     stock = dict()
 
     for i in range(len(loaded)):
@@ -153,7 +153,7 @@ def calc_vol_rate(rate = 2.0):
 
     path = ct.CSV_DIR + datetime.now().strftime('results/vr_open/%Y%m%d_%H%M/')
     os.mkdir(path)   
-    pd.DataFrame(selected, dtype='str').to_csv(path+'select_vr.csv',encoding='gbk')
+    pd.DataFrame(selected, dtype='str').to_csv(path+'select_vr.csv', encoding='utf8')
     return selected
 
 def main():

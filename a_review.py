@@ -19,8 +19,9 @@ PATH_2_HIS_DATA = ct.CSV_DIR+'historyData/'
 PATH_2_REVIEW = ct.CSV_DIR+'review/'
 
 def _review(code,dateFile):
+    print(code)
     path2Stock = PATH_2_HIS_DATA + code+'.csv';
-    df = pd.read_csv(path2Stock, dtype='str',encoding='gbk')
+    df = pd.read_csv(path2Stock, dtype='str', encoding='utf8')
     sorted_df = df.sort_values('date')
 
     ct._write_msg('\rCalculating: '+code)
@@ -49,19 +50,20 @@ def _review(code,dateFile):
     return result
 
 def review(dateFile):
-    selected = pd.read_csv(PATH_2_REVIEW+dateFile+'.csv', dtype='str',encoding='gbk')
+    selected = pd.read_csv(PATH_2_REVIEW+dateFile+'.csv', dtype='str', encoding='utf8')
 
     multiFunc = partial(_review,dateFile=dateFile)
     with Pool(16) as p:
         results = p.map(multiFunc, selected['code'])
 
-    pd.DataFrame(results, dtype='str').to_csv(PATH_2_REVIEW+'review_raw_'+dateFile+'.csv')
+    pd.DataFrame(results, dtype='str').to_csv(PATH_2_REVIEW+'review_raw_'+dateFile+'.csv', encoding='utf8')
 
 
 
 def main():
     today = datetime.today()
     dayCount = 0
+
     while dayCount <= 6:
         if(du.is_holiday(today.strftime('%Y/%m/%d')) == False):
             review(today.date().isoformat())

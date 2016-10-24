@@ -21,13 +21,14 @@ from tushare.util import dateu as du
 import a_dc_dataCollect as dc
 import b_vr_volumeRate as vr
 
-INTERVAL = 0.1 # minutes
+INTERVAL = 1 # minutes
 
 def fillinVr(lastDay, time, currentData):
     for i,r in currentData.iterrows():
         key = r['code']
-        volumeRate = float(r['volume']) * 60 * 4 / vr.tradeTime(time) / lastDay[key]['v5'] / 100
-        currentData['vr'] = volumeRate
+        if(key in lastDay.keys()):
+            volumeRate = float(r['volume']) * 60 * 4 / vr.tradeTime(time) / lastDay[key]['v5'] / 100
+            currentData['vr'] = volumeRate
 
 
 
@@ -41,9 +42,9 @@ def calcu(current, last):
             continue
 
         key = r['code']
-        priceRate = (float(r['trade_cur']) - float(r['trade'])) / float(r['trade'])
-        vrRate = (float(r['vr_cur']) - float(r['vr'])) / float(r['vr'])
-        if(priceRate > 0 and vrRate > 0): 
+        priceRate = (float(r['trade_cur']) - float(r['trade'])) / float(r['trade']) * 100 #%
+        vrRate = (float(r['vr_cur']) - float(r['vr'])) / float(r['vr']) * 100 #%
+        if(priceRate > 1.0 and vrRate > 1.0 and float(r['vr_cur']) > 2.0): 
             sel = {
                    '1_code':key,
                    '2_name':r['name'],
@@ -61,11 +62,12 @@ def calcu(current, last):
 
             selected.append(sel)
 
-    now = datetime.now()
-    path = ct.CSV_DIR + now.strftime('results/vr_cont/%Y%m%d/')
-    if(os.path.exists(path) == False):
-        os.mkdir(path)
-    pd.DataFrame(selected, dtype='str').to_csv(path+now.strftime('%H%M.csv'),encoding='gbk')
+    if(len(selected) > 0):
+        now = datetime.now()
+        path = ct.CSV_DIR + now.strftime('results/vr_cont/%Y%m%d/')
+        if(os.path.exists(path) == False):
+            os.mkdir(path)
+        pd.DataFrame(selected, dtype='str').to_csv(path+now.strftime('%H%M.csv'), encoding='utf8')
 
 
 def main():
@@ -84,19 +86,19 @@ def main():
     last = None
     while True:
         now = datetime.now().time()
-        ct._write_msg('\r'+now.isoformat())
+        ct._write_msg('\r'+now.strftime('%H%M'))
 
-        '''
+        
         if(now > time(hour=11,minute=30) and now < time(hour=13)):
             continue
         if(now < time(hour=9, minute=31) or now > time(hour=15)):
             break
-        '''
+        
         ct._write_msg('\n')
         current = dc.get_today_all_multi()
         fillinVr(lastDay = dataLastday, time=now, currentData=current)
 
-        todayAll[now.isoformat()] = current #not used for now
+        todayAll[now.strftime('%H%M')] = current #not used for now
 
         if(last is not None):
             calcu(current=current, last=last)

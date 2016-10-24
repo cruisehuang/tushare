@@ -22,13 +22,13 @@ def get_save_3y_fund_data():
         for q in [1,2,3,4]:
             df = fundamental.get_report_data(y,q)
             if df is not None:
-                df.to_csv(PATH_2_FUND_DATA+str(y)+'_'+str(q)+'.csv', encoding='gbk')
+                df.to_csv(PATH_2_FUND_DATA+str(y)+'_'+str(q)+'.csv', encoding='utf8')
 
 def split_data_by_codes():
     df = pd.DataFrame()
     for file in os.listdir(PATH_2_FUND_DATA):
         if(file.endswith('.csv')):
-            data = pd.read_csv(PATH_2_FUND_DATA + file, dtype='str',encoding='gbk')
+            data = pd.read_csv(PATH_2_FUND_DATA + file, dtype='str', encoding='utf8')
             data.insert(loc=1,column='quarter',value=file.split('.')[0])
             df = df.append(data)
 
@@ -45,12 +45,12 @@ def split_data_by_codes():
     ct._write_msg('\n')
     for k,v in dictList.items():
         ct._write_msg('\rWriting: '+ k)
-        pd.DataFrame(v, dtype='str').to_csv(PATH_2_FUND_DATA+'byCodes/'+k+'.csv')
+        pd.DataFrame(v, dtype='str').to_csv(PATH_2_FUND_DATA+'byCodes/'+k+'.csv', encoding='utf8')
     
 
 
 def main():
-    get_save_3y_fund_data()
+    #get_save_3y_fund_data()
     split_data_by_codes()
       
  

@@ -141,8 +141,8 @@ def calc_vol_rate(rate = 2.0):
                 if( key in bb.keys() ):
                     bbRow = bb[key]
                     sel['8_BB'] = '龙虎榜'
-                    sel['8_1_count'] = bbRow['count_5']+'/'+bbRow['count_10']
-                    sel['8_2_net'] = bbRow['net_5']+'/'+bbRow['net_10'] 
+                    sel['8_1_count'] = str(bbRow['count_5'])+'/'+str(bbRow['count_10'])
+                    sel['8_2_net'] = str(bbRow['net_5'])+'/'+str(bbRow['net_10']) 
                     ct._write_msg(" <==龙虎榜：" + sel['8_1_count'] ) 
 
                 selected.append(sel)

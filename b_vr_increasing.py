@@ -21,16 +21,14 @@ from tushare.util import dateu as du
 import a_dc_dataCollect as dc
 import b_vr_volumeRate as vr
 
-INTERVAL = 1 # minutes
+INTERVAL = 1.5 # minutes
 
 def fillinVr(lastDay, time, currentData):
     for i,r in currentData.iterrows():
         key = r['code']
         if(key in lastDay.keys()):
             volumeRate = float(r['volume']) * 60 * 4 / vr.tradeTime(time) / lastDay[key]['v5'] / 100
-            currentData['vr'] = volumeRate
-
-
+            currentData.set_value(i,'vr',volumeRate)
 
 def calcu(current, last):
     selected = []
@@ -86,18 +84,16 @@ def main():
     last = None
     while True:
         now = datetime.now().time()
-        ct._write_msg('\r'+now.strftime('%H%M'))
+        ct._write_msg('\r'+now.strftime('%H:%M'))
 
-        
         if(now > time(hour=11,minute=30) and now < time(hour=13)):
             continue
         if(now < time(hour=9, minute=31) or now > time(hour=15)):
             break
-        
+
         ct._write_msg('\n')
         current = dc.get_today_all_multi()
         fillinVr(lastDay = dataLastday, time=now, currentData=current)
-
         todayAll[now.strftime('%H%M')] = current #not used for now
 
         if(last is not None):
@@ -106,7 +102,6 @@ def main():
         last = current
 
         tm.sleep(60*INTERVAL)
-  
  
 if __name__ == '__main__':
     main()

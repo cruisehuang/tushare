@@ -30,13 +30,13 @@ def fillinVr(lastDay, time, currentData):
             volumeRate = float(r['volume']) * 60 * 4 / vr.tradeTime(time) / lastDay[key]['v5'] / 100
             currentData.set_value(i,'vr',volumeRate)
 
-def calcu(current, last):
+def calcu(current, last,counting):
     selected = []
     bb = vr.readBillboard()
     merged = last.merge(current, on='code',suffixes=('','_cur'))
 
     for i,r in merged.iterrows():
-        if(cmath.isclose(float(r['trade']),0.0)):
+        if(cmath.isclose(float(r['trade']),0.0) or cmath.isclose(float(r['vr']),0.0)):
             continue
 
         key = r['code']
@@ -50,6 +50,13 @@ def calcu(current, last):
                    '4_vr_rate': '%.2f%%' % vrRate
                    }
             ct._write_msg(" \n%s %s: 价格上涨%s 量比增加%s" % (sel['1_code'],sel['2_name'],sel['3_p_rate'],sel['4_vr_rate']))
+
+            if( key not in counting.keys()):
+                counting[key] = 1
+            else:
+                counting[key] += 1
+            ct._write_msg("  今日次数：" +  counting[key])
+
 
             if( key in bb.keys() ):
                 bbRow = bb[key]
@@ -84,7 +91,7 @@ def main():
     last = None
     while True:
         now = datetime.now().time()
-        ct._write_msg('\r'+now.strftime('%H:%M'))
+        ct._write_msg('\n'+now.strftime('%H:%M'))
 
         if(now > time(hour=11,minute=30) and now < time(hour=13)):
             continue
@@ -96,8 +103,9 @@ def main():
         fillinVr(lastDay = dataLastday, time=now, currentData=current)
         todayAll[now.strftime('%H%M')] = current #not used for now
 
+        selectedCount = dict() #{code,count}
         if(last is not None):
-            calcu(current=current, last=last)
+            calcu(current=current, last=last, counting=selectedCount)
         
         last = current
 

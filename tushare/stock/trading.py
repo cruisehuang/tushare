@@ -64,7 +64,7 @@ def get_hist_data(code=None, start=None, end=None,
         time.sleep(pause)
         try:
             request = Request(url)
-            lines = urlopen(request, timeout = 20).read()
+            lines = urlopen(request, timeout = 10).read()
             if len(lines) < 15: #no data
                 return None
         except Exception as e:

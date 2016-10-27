@@ -55,8 +55,8 @@ def get_his(symbol, write2disk):
 
 
 def get_hists_multi(symbols, write2disk=False, start=None, end=None,
-                    ktype='D', retry_count=3,
-                    pause=0.001):
+                    ktype='D', retry_count=1,
+                    pause=0.01):
     """
     批量获取历史行情数据，具体参数和返回数据类型请参考get_hist_data接口
     """

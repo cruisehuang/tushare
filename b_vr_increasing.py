@@ -46,16 +46,18 @@ def calcu(current, last,counting):
             sel = {
                    '1_code':key,
                    '2_name':r['name'],
+                   '2_1_per': '%.2f%%' % r['changepercent'],
                    '3_p_rate': '%.2f%%' % priceRate,
                    '4_vr_rate': '%.2f%%' % vrRate
                    }
-            ct._write_msg(" \n%s %s: 价格上涨%s 量比增加%s" % (sel['1_code'],sel['2_name'],sel['3_p_rate'],sel['4_vr_rate']))
+            ct._write_msg(" \n%s %s : 涨幅%s 价格上涨%s 量比增加%s" 
+                          % (sel['1_code'],sel['2_name'],sel['2_1_per'],sel['3_p_rate'],sel['4_vr_rate']))
 
             if( key not in counting.keys()):
                 counting[key] = 1
             else:
                 counting[key] += 1
-            ct._write_msg("  今日次数：" +  counting[key])
+            ct._write_msg("  今日次数：" + str(counting[key]))
 
 
             if( key in bb.keys() ):
@@ -88,26 +90,37 @@ def main():
     
     todayAll = dict()
     dataLastday = vr.readDataLastday()
+    selectedCount = dict() #{code,count}
     last = None
+
     while True:
         now = datetime.now().time()
-        ct._write_msg('\n'+now.strftime('%H:%M'))
-
+        
         if(now > time(hour=11,minute=30) and now < time(hour=13)):
             continue
         if(now < time(hour=9, minute=31) or now > time(hour=15)):
             break
-
+        ct._write_msg('\n'+now.strftime('%H:%M'))
         ct._write_msg('\n')
-        current = dc.get_today_all_multi()
+        
+        try:
+            current = dc.get_today_all_multi()
+        except Exception as e:
+            print(e)
+            tm.sleep(10)
+            continue
+
         fillinVr(lastDay = dataLastday, time=now, currentData=current)
         todayAll[now.strftime('%H%M')] = current #not used for now
 
-        selectedCount = dict() #{code,count}
         if(last is not None):
             calcu(current=current, last=last, counting=selectedCount)
         
         last = current
+
+        if(len(selectedCount)>0):
+            selectedPath = resultPath + datetime.now().strftime('vr_cont/%Y%m%d/')
+            pd.DataFrame.from_dict(selectedCount, orient='index', dtype='str').to_csv(selectedPath+'selectedToday.csv', encoding='utf8')
 
         tm.sleep(60*INTERVAL)
  

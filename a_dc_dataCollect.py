@@ -85,7 +85,14 @@ def write_all_his():
 
 def read_his(code):
     ct._write_msg('\rReading: '+code)
-    df = pd.read_csv(PATH_2_HIS_DATA + code+'.csv', dtype='str', encoding='utf8')
+
+    codeHisPath = PATH_2_HIS_DATA + code+'.csv'
+
+    if(os.path.exists(codeHisPath) == False):
+        print('Path Not Exists:' + code)
+        return None
+
+    df = pd.read_csv(codeHisPath, dtype='str', encoding='utf8')
     return df
 
 def read_all_his():
@@ -100,6 +107,8 @@ def read_all_his():
         rp.join()
 
     for stock in results:
+        if(stock is None):
+            continue
         ct._write_msg('\rHandling: '+ stock.ix[0]['code'])
         allHis = allHis.append(stock,ignore_index=True)
         lastDay = lastDay.append(stock.head(1),ignore_index=True)

@@ -92,8 +92,6 @@ def get_hist_data(code=None, start=None, end=None,
                 df = df.drop('turnover', axis=1)
             df = df.set_index('date')
             df = df.sort_index(ascending = False)
-            #added by Cruise
-            df.insert(loc=0,column='code',value=code)
             return df
     raise IOError(ct.NETWORK_URL_ERROR_MSG)
 
@@ -410,7 +408,6 @@ def get_h_data(code, start=None, end=None, autype='qfq',
     end = du.today() if end is None else end
     qs = du.get_quarts(start, end)
     qt = qs[0]
-    ct._write_head()
     data = _parse_fq_data(_get_index_url(index, code, qt), index,
                           retry_count, pause)
     if len(qs)>1:

@@ -5,26 +5,23 @@ Review the selected
 @author: Cruise Huang
 
 '''
-import os,os.path
-from datetime import datetime,date,time,timedelta
+import os
+from datetime import datetime,timedelta
 from functools import partial
 from multiprocessing.pool import Pool
 
 import pandas as pd
 
-from tushare.stock import cons as ct
-from tushare.util import dateu as du
 
-PATH_2_HIS_DATA = ct.CSV_DIR+'historyData/'
-PATH_2_REVIEW = ct.CSV_DIR+'review/'
+import config as cfg
+import utils
 
 def _review(code,dateFile):
-    print(code)
-    path2Stock = PATH_2_HIS_DATA + code+'.csv';
+    path2Stock = cfg.PATH_2_HIS_DATA + code+'.csv';
     df = pd.read_csv(path2Stock, dtype='str', encoding='utf8')
     sorted_df = df.sort_values('date')
 
-    ct._write_msg('\rCalculating: '+code)
+    utils.msg('\rCalculating: '+code)
     date = datetime.strptime(dateFile, '%Y-%m-%d')
 
     result = dict()
@@ -50,25 +47,25 @@ def _review(code,dateFile):
     return result
 
 def review(dateFile):
-    selected = pd.read_csv(PATH_2_REVIEW+dateFile+'.csv', dtype='str', encoding='utf8')
+    selected = pd.read_csv(cfg.PATH_2_REVIEW+dateFile+'.csv', dtype='str', encoding='utf8')
 
     multiFunc = partial(_review,dateFile=dateFile)
     with Pool(16) as p:
-        results = p.map(multiFunc, selected['code'])
+        results = p.map(multiFunc, selected['1_code'])
 
-    pd.DataFrame(results, dtype='str').to_csv(PATH_2_REVIEW+'review_raw_'+dateFile+'.csv', encoding='utf8')
+    pd.DataFrame(results, dtype='str').to_csv(cfg.PATH_2_REVIEW+'review_raw_'+dateFile+'.csv', encoding='utf8')
 
 
 
 def main():
-    today = datetime.today()
+    reviewDay = utils.now()
     dayCount = 0
 
     while dayCount <= 6:
-        if(du.is_holiday(today.strftime('%Y/%m/%d')) == False):
-            review(today.date().isoformat())
+        if(utils.isHoliday(reviewDay.date().isoformat()) == False):
+            review(reviewDay.date().isoformat())
             
-        today = today - timedelta(days=1)
+        reviewDay = reviewDay - timedelta(days=1)
         dayCount+=1
 
 

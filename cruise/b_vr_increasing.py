@@ -5,8 +5,7 @@ Calculating continuously VR increase
 @author: Cruise Huang
 
 '''
-import os,os.path
-from datetime import datetime,date,time,timedelta
+from datetime import time
 import time as tm
 import cmath
 from functools import partial
@@ -14,25 +13,25 @@ from multiprocessing.pool import Pool
 
 import pandas as pd
 
-from tushare.stock import trading as td
-from tushare.stock import cons as ct
-from tushare.util import dateu as du
-
+import config as cfg
+import utils
 import a_dc_dataCollect as dc
-import b_vr_volumeRate as vr
+
 
 INTERVAL = 1.5 # minutes
+PATH_2_VR = cfg.PATH_2_RESULTS + 'vr_cont/'
 
 def fillinVr(lastDay, time, currentData):
     for i,r in currentData.iterrows():
         key = r['code']
         if(key in lastDay.keys()):
-            volumeRate = float(r['volume']) * 60 * 4 / vr.tradeTime(time) / lastDay[key]['v5'] / 100
+            volumeRate = float(r['volume']) * 60 * 4 / utils.tradeTime(time) / lastDay[key]['v5'] / 100
             currentData.set_value(i,'vr',volumeRate)
 
 def calcu(current, last,counting):
     selected = []
-    bb = vr.readBillboard()
+    bb = utils.readBillboard()
+    news = utils.readNews()
     merged = last.merge(current, on='code',suffixes=('','_cur'))
 
     for i,r in merged.iterrows():
@@ -50,58 +49,57 @@ def calcu(current, last,counting):
                    '3_p_rate': '%.2f%%' % priceRate,
                    '4_vr_rate': '%.2f%%' % vrRate
                    }
-            ct._write_msg(" \n%s %s : 涨幅%s 价格上涨%s 量比增加%s" 
+            utils.msg(" \n%s %s : 涨幅%s 价格上涨%s 量比增加%s" 
                           % (sel['1_code'],sel['2_name'],sel['2_1_per'],sel['3_p_rate'],sel['4_vr_rate']))
 
             if( key not in counting.keys()):
                 counting[key] = 1
             else:
                 counting[key] += 1
-            ct._write_msg("  今日次数：" + str(counting[key]))
+            utils.msg("  今日次数：" + str(counting[key]))
 
+            if( key in news.keys()):
+                sel['6_news'] = news[key]
+                utils.msg(" <==" + news[key])
 
             if( key in bb.keys() ):
                 bbRow = bb[key]
                 sel['8_BB'] = '龙虎榜'
                 sel['8_1_count'] = str(bbRow['count_5'])+'/'+str(bbRow['count_10'])
                 sel['8_2_net'] = str(bbRow['net_5'])+'/'+str(bbRow['net_10']) 
-                ct._write_msg(" <==龙虎榜：" + sel['8_1_count'] ) 
+                utils.msg(" <==龙虎榜：" + sel['8_1_count'] )
 
             selected.append(sel)
 
     if(len(selected) > 0):
         now = datetime.now()
-        path = ct.CSV_DIR + now.strftime('results/vr_cont/%Y%m%d/')
-        if(os.path.exists(path) == False):
-            os.mkdir(path)
+        path = PATH_2_VR + utils.curDateStr('%Y%m%d/')
+        utils.getPath(path)
         pd.DataFrame(selected, dtype='str').to_csv(path+now.strftime('%H%M.csv'), encoding='utf8')
 
 
 def main():
-    path2Ref = ct.CSV_DIR+'stocks_his_lastday.csv'
-    if(os.path.exists(path2Ref) == False):
-        print('Ref File Not existed!')
+    if(utils.pathExists(cfg.FILE_LAST_HIS) == False):
+        print('Yesterday His File Not existed!')
         return
 
-    resultPath = ct.CSV_DIR+'results/'
-    if(os.path.exists(resultPath) == False):
-        os.mkdir(resultPath)
+    utils.getPath(cfg.PATH_2_RESULTS)
 
     
     todayAll = dict()
-    dataLastday = vr.readDataLastday()
+    dataLastday = utils.readDataLastday()
     selectedCount = dict() #{code,count}
     last = None
 
     while True:
-        now = datetime.now().time()
+        now = utils.now().time()
         
         if(now > time(hour=11,minute=30) and now < time(hour=13)):
             continue
         if(now < time(hour=9, minute=31) or now > time(hour=15)):
             break
-        ct._write_msg('\n'+now.strftime('%H:%M'))
-        ct._write_msg('\n')
+        utils.msg('\n'+now.strftime('%H:%M'))
+        utils.msg('\n')
         
         try:
             current = dc.get_today_all_multi()
@@ -119,8 +117,8 @@ def main():
         last = current
 
         if(len(selectedCount)>0):
-            selectedPath = resultPath + datetime.now().strftime('vr_cont/%Y%m%d/')
-            pd.DataFrame.from_dict(selectedCount, orient='index', dtype='str').to_csv(selectedPath+'selectedToday.csv', encoding='utf8')
+            selectedPath = PATH_2_VR + utils.curDateStr('%Y%m%d/selectedToday.csv')
+            pd.DataFrame.from_dict(selectedCount, orient='index', dtype='str').to_csv(selectedPath, encoding='utf8')
 
         tm.sleep(60*INTERVAL)
  

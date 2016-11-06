@@ -86,6 +86,21 @@ def readNews():
 
     return codesInNews
 
+def readStrategy():
+    path2Strategy = cfg.PATH_2_STRATEGY
+
+    rumors = pd.read_csv(path2Strategy+'focus.csv', dtype='str', encoding='utf8')
+    multHeaded603 = pd.read_csv(path2Strategy+'multi_head_603.csv', dtype='str', encoding='utf8')
+
+    total = rumors.append(multHeaded603,ignore_index=True)
+
+    codesInStrategy = dict()
+    for i,r in total.iterrows():
+        code = r['code'].split('.')[0]
+        codesInStrategy[code] = r['remark']     
+
+    return codesInStrategy
+
 def readBillboard():
     path2BB= cfg.PATH_2_BILLBOARD + curDateStr('%Y%m%d') +'_merged.csv'
     if(os.path.exists(path2BB) == False):

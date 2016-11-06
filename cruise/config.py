@@ -16,6 +16,7 @@ PATH_2_HIS_DATA = MAIN_DIR+'historyData/'
 PATH_2_BILLBOARD = MAIN_DIR+'billboard/'
 PATH_2_REVIEW = MAIN_DIR+'review/'
 PATH_2_NEWS = MAIN_DIR+'news/'
+PATH_2_STRATEGY = MAIN_DIR+'strategy/'
 PATH_2_FUND = MAIN_DIR+'fundData/'
 PATH_2_RESULTS = MAIN_DIR+'results/'
 

@@ -32,6 +32,7 @@ def calcu(current, last,counting):
     selected = []
     bb = utils.readBillboard()
     news = utils.readNews()
+    strategy = utils.readStrategy()
     merged = last.merge(current, on='code',suffixes=('','_cur'))
 
     for i,r in merged.iterrows():
@@ -61,6 +62,10 @@ def calcu(current, last,counting):
             if( key in news.keys()):
                 sel['6_news'] = news[key]
                 utils.msg(" <==" + news[key])
+
+            if( key in strategy.keys()):
+                sel['7_strategy'] = strategy[key]
+                utils.msg(" <==" + strategy[key])
 
             if( key in bb.keys() ):
                 bbRow = bb[key]

@@ -38,6 +38,7 @@ def get_tick_multi(symbols=None, date=None):
 
 def calc_vol_rate(rate = 2.0):
     news = utils.readNews()
+    strategy = utils.readStrategy()
     bb = utils.readBillboard()
     stock = utils.readDataLastday()
 
@@ -71,6 +72,10 @@ def calc_vol_rate(rate = 2.0):
                 if( key in news.keys()):
                     sel['6_news'] = news[key]
                     utils.msg(" <==" + news[key])
+
+                if( key in strategy.keys()):
+                    sel['7_strategy'] = strategy[key]
+                    utils.msg(" <==" + strategy[key])
 
                 if( key in bb.keys() ):
                     bbRow = bb[key]

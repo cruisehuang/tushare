@@ -77,10 +77,9 @@ def calcu(current, last,counting):
             selected.append(sel)
 
     if(len(selected) > 0):
-        now = datetime.now()
         path = PATH_2_VR + utils.curDateStr('%Y%m%d/')
         utils.getPath(path)
-        pd.DataFrame(selected, dtype='str').to_csv(path+now.strftime('%H%M.csv'), encoding='utf8')
+        pd.DataFrame(selected, dtype='str').to_csv(path+utils.curTimeStr('%H%M.csv'), encoding='utf8')
 
 
 def main():

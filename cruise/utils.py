@@ -51,7 +51,7 @@ def isHoliday(date):
 
 
 def timeDiff(t1,t2):
-    d = utils.now().date()
+    d = now().date()
     return datetime.combine(d,t1) - datetime.combine(d,t2) 
 
 def tradeTime(curTime):
@@ -90,9 +90,9 @@ def readStrategy():
     path2Strategy = cfg.PATH_2_STRATEGY
 
     rumors = pd.read_csv(path2Strategy+'focus.csv', dtype='str', encoding='utf8')
-    multHeaded603 = pd.read_csv(path2Strategy+'multi_head_603.csv', dtype='str', encoding='utf8')
+    holding = pd.read_csv(path2Strategy+'holding.csv', dtype='str', encoding='utf8')
 
-    total = rumors.append(multHeaded603,ignore_index=True)
+    total = rumors.append(holding,ignore_index=True)
 
     codesInStrategy = dict()
     for i,r in total.iterrows():

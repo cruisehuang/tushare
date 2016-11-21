@@ -34,6 +34,26 @@ def get_tick_multi(symbols=None, date=None):
         with Pool(16) as p:
             results = p.map(multiFunc, symbols)
 '''
+
+def printResult(df):
+    for i,r in df.iterrows():
+        utils.msg(" \n%s %s: %s" % (r['1_code'],r['2_name'],r['5_vol_rate']))
+        try:
+            if(r['7_note'] is not None):
+                utils.msg(" <==" + r['7_note'])
+
+            if(r['6_news'] is not None):
+                utils.msg(" <==" + r['6_news'])
+
+            if(r['7_strategy'] is not None):
+                utils.msg(" <==" + r['7_strategy'])
+
+            if(r['8_BB'] is not None):
+                utils.msg(" <==" + r['8_BB'] + r['8_1_count'])
+
+        except Exception as e:
+            pass
+
     
 
 def calc_vol_rate(rate = 2.0):
@@ -59,30 +79,31 @@ def calc_vol_rate(rate = 2.0):
                        '2_name':row['name'],
                        '3_cp':row['changepercent'],
                        '4_price':row['trade'],
-                       '5_vol_rate': '%.2f%%' % vr }
-                utils.msg(" \n%s %s: %s" % (sel['1_code'],sel['2_name'],sel['5_vol_rate']))
+                       '5_vol_rate': '%.2f%%' % vr,
+                       '7_note': None,
+                       '6_news': None,
+                       '7_strategy': None,
+                       '8_BB': None,
+                       '8_1_count': None,
+                       '8_2_net': None}
                 
                 ##更多条件
                 if( price <= stock[key]['ma10'] * 1.05                         ##当日开盘价在前日MA10的5%以内
                     and stock[key]['volume'] < stock[key]['v10'] * 1.5          ##前一天没有放巨量
                    ):
                     sel['7_note'] = '精选'
-                    utils.msg(" <==精选")
 
                 if( key in news.keys()):
                     sel['6_news'] = news[key]
-                    utils.msg(" <==" + news[key])
 
                 if( key in strategy.keys()):
                     sel['7_strategy'] = strategy[key]
-                    utils.msg(" <==" + strategy[key])
 
                 if( key in bb.keys() ):
                     bbRow = bb[key]
                     sel['8_BB'] = '龙虎榜'
                     sel['8_1_count'] = str(bbRow['count_5'])+'/'+str(bbRow['count_10'])
                     sel['8_2_net'] = str(bbRow['net_5'])+'/'+str(bbRow['net_10']) 
-                    utils.msg(" <==龙虎榜：" + sel['8_1_count'] ) 
 
                 selected.append(sel)
                 
@@ -90,10 +111,15 @@ def calc_vol_rate(rate = 2.0):
         except KeyError as e:
             continue
 
+    df = pd.DataFrame(selected, dtype='str')
+    sorted = df.sort_values('5_vol_rate',kind='mergesort')
+    printResult(sorted)
+
+
     path = cfg.PATH_2_RESULTS + utils.now().strftime('vr_open/%Y%m%d_%H%M/')
     os.mkdir(path)   
-    pd.DataFrame(selected, dtype='str').to_csv(path+'select_vr.csv', encoding='utf8')
-    return selected
+    sorted.to_csv(path+'select_vr.csv', encoding='utf8')
+    return sorted
 
 def main():
     if(utils.pathExists(cfg.FILE_LAST_HIS) == False):

@@ -80,6 +80,7 @@ def calc_vol_rate(rate = 2.0):
                        '3_cp':row['changepercent'],
                        '4_price':row['trade'],
                        '5_vol_rate': '%.2f%%' % vr,
+                       '5_vr_float': vr,
                        '7_note': None,
                        '6_news': None,
                        '7_strategy': None,
@@ -112,7 +113,7 @@ def calc_vol_rate(rate = 2.0):
             continue
 
     df = pd.DataFrame(selected, dtype='str')
-    sorted = df.sort_values('5_vol_rate',kind='mergesort')
+    sorted = df.sort_values('5_vr_float')
     printResult(sorted)
 
 

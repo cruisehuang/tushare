@@ -7,6 +7,7 @@ Utils, file io, datetime, ...
 
 import sys
 import os.path
+import shutil
 from datetime import datetime,date,time,timedelta
 
 import pandas as pd
@@ -48,6 +49,9 @@ def isHoliday(date):
         return True
     else:
         return False
+
+def copy(src, dst):
+    shutil.copy(src, dst)
 
 
 def timeDiff(t1,t2):

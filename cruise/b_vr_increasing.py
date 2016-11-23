@@ -93,6 +93,7 @@ def main():
     todayAll = dict()
     dataLastday = utils.readDataLastday()
     selectedCount = dict() #{code,count}
+    selectedPath = PATH_2_VR + utils.curDateStr('%Y%m%d/selectedToday111.csv')
     last = None
 
     while True:
@@ -102,8 +103,7 @@ def main():
             continue
         if(now < time(hour=9, minute=31) or now > time(hour=15)):
             break
-        utils.msg('\n'+now.strftime('%H:%M'))
-        utils.msg('\n')
+        utils.msg(now.strftime('\n%H:%M\n'))
         
         try:
             current = dc.get_today_all_multi()
@@ -121,10 +121,14 @@ def main():
         last = current
 
         if(len(selectedCount)>0):
-            selectedPath = PATH_2_VR + utils.curDateStr('%Y%m%d/selectedToday.csv')
-            pd.DataFrame.from_dict(selectedCount, orient='index', dtype='str').to_csv(selectedPath, encoding='utf8')
+            df = pd.DataFrame.from_dict(selectedCount, orient='index', dtype='str')
+            df.index.names=['1_code']
+            df.columns = ['count']
+            df.to_csv(selectedPath, encoding='utf8')
 
         tm.sleep(60*INTERVAL)
+
+    utils.copy(selectedPath, cfg.PATH_2_REVIEW+utils.curDateStr('%Y-%m-%d_cont.csv'))
  
 if __name__ == '__main__':
     main()

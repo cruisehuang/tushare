@@ -118,8 +118,10 @@ def calc_vol_rate(rate = 2.0):
 
 
     path = cfg.PATH_2_RESULTS + utils.now().strftime('vr_open/%Y%m%d_%H%M/')
-    os.mkdir(path)   
-    sorted.to_csv(path+'select_vr.csv', encoding='utf8')
+    os.mkdir(path)
+    filePath = path+'select_vr.csv'
+    sorted.to_csv(filePath, encoding='utf8')
+    utils.copy(filePath, cfg.PATH_2_REVIEW+utils.curDateStr('%Y-%m-%d_op.csv'))
     return sorted
 
 def main():

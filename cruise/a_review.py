@@ -46,14 +46,22 @@ def _review(code,dateFile):
 
     return result
 
-def review(dateFile):
-    selected = pd.read_csv(cfg.PATH_2_REVIEW+dateFile+'.csv', dtype='str', encoding='utf8')
+def review(dateFile, suffix = None):
+    fileName = dateFile
+    if(suffix is not None):
+        fileName += suffix
+
+    filePath = cfg.PATH_2_REVIEW+fileName+'.csv'
+    if(utils.pathExists(filePath) == False):
+        return
+
+    selected = pd.read_csv(filePath, dtype='str', encoding='utf8')
 
     multiFunc = partial(_review,dateFile=dateFile)
     with Pool(16) as p:
         results = p.map(multiFunc, selected['1_code'])
 
-    pd.DataFrame(results, dtype='str').to_csv(cfg.PATH_2_REVIEW+'review_raw_'+dateFile+'.csv', encoding='utf8')
+    pd.DataFrame(results, dtype='str').to_csv(cfg.PATH_2_REVIEW+'review_raw_'+fileName+'.csv', encoding='utf8')
 
 
 
@@ -63,7 +71,10 @@ def main():
 
     while dayCount <= 6:
         if(utils.isHoliday(reviewDay.date().isoformat()) == False):
-            review(reviewDay.date().isoformat())
+            date = reviewDay.date().isoformat()
+            review(dateFile=date)
+            review(dateFile=date, suffix='_op')
+            review(dateFile=date, suffix='_cont')
             
         reviewDay = reviewDay - timedelta(days=1)
         dayCount+=1

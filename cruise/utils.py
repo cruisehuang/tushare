@@ -8,12 +8,28 @@ Utils, file io, datetime, ...
 import sys
 import os.path
 import shutil
+import winsound
 from datetime import datetime,date,time,timedelta
 
 import pandas as pd
 
 import config as cfg
 
+'''
+ Section: Message and alert
+'''
+def msg(msg):
+    sys.stdout.write(msg)
+    sys.stdout.flush()
+
+# Taking time, consider putting in another thread or process
+def alert():
+    #SystemAsterisk SystemExclamation SystemExit SystemHand SystemQuestion
+    winsound.PlaySound('SystemHand',winsound.SND_ALIAS)
+
+'''
+ Section: Path and File
+'''
 def pathExists(path):
     return os.path.exists(path)
 
@@ -22,6 +38,12 @@ def getPath(path):
         os.mkdir(path) 
     return path;
 
+def copy(src, dst):
+    shutil.copy(src, dst)
+
+'''
+ Section: Datetime
+'''
 def now():
     return datetime.today();
 
@@ -34,11 +56,13 @@ def curDateStr(strFormat):
 def curTimeStr(strFormat):
     return now().time().strftime(strFormat)
 
-def msg(msg):
-    sys.stdout.write(msg)
-    sys.stdout.flush()
+def timeDiff(t1,t2):
+    d = now().date()
+    return datetime.combine(d,t1) - datetime.combine(d,t2) 
 
-
+'''
+ Section: Common Biz functions
+'''
 def isHoliday(date):
     df = pd.read_csv(cfg.FILE_ALL_CALENDAR)
 
@@ -49,14 +73,6 @@ def isHoliday(date):
         return True
     else:
         return False
-
-def copy(src, dst):
-    shutil.copy(src, dst)
-
-
-def timeDiff(t1,t2):
-    d = now().date()
-    return datetime.combine(d,t1) - datetime.combine(d,t2) 
 
 def tradeTime(curTime):
     if(curTime >= time(hour=9,minute=15) and curTime < time(hour=9,minute=31)):
@@ -73,8 +89,6 @@ def tradeTime(curTime):
         return None
 
     return delta.total_seconds() // 60
-
-
 
 def readNews():
     path2News = cfg.PATH_2_NEWS + curDateStr('%Y%m%d') +'.csv'

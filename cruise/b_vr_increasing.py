@@ -35,6 +35,7 @@ def calcu(current, last,counting):
     strategy = utils.readStrategy()
     merged = last.merge(current, on='code',suffixes=('','_cur'))
 
+    alert = False
     for i,r in merged.iterrows():
         if(cmath.isclose(float(r['trade']),0.0) or cmath.isclose(float(r['vr']),0.0)):
             continue
@@ -57,6 +58,8 @@ def calcu(current, last,counting):
                 counting[key] = 1
             else:
                 counting[key] += 1
+                if(counting[key] >= 3):
+                    alert = True
             utils.msg("  今日次数：" + str(counting[key]))
 
             if( key in news.keys()):
@@ -66,6 +69,7 @@ def calcu(current, last,counting):
             if( key in strategy.keys()):
                 sel['7_strategy'] = strategy[key]
                 utils.msg(" <==" + strategy[key])
+                alert = True
 
             if( key in bb.keys() ):
                 bbRow = bb[key]
@@ -81,6 +85,8 @@ def calcu(current, last,counting):
         utils.getPath(path)
         pd.DataFrame(selected, dtype='str').to_csv(path+utils.curTimeStr('%H%M.csv'), encoding='utf8')
 
+    if(alert == True):
+        utils.alert()
 
 def main():
     if(utils.pathExists(cfg.FILE_LAST_HIS) == False):

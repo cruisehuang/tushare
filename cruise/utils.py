@@ -93,8 +93,7 @@ def tradeTime(curTime):
 def readNews():
     path2News = cfg.PATH_2_NEWS + curDateStr('%Y%m%d') +'.csv'
     if(pathExists(path2News) == False):
-        print(path2News + 'Not existed!')
-        return []
+        return dict()
 
     news = pd.read_csv(path2News, dtype='str', encoding='utf8')
     codesInNews = dict()
